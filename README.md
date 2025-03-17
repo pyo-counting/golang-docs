@@ -88,8 +88,20 @@
     ```
 - `func panic(v any)` 내장 함수는 현재 함수를 즉시 멈추고 현재 함수에 defer 함수들을 모두 실행한 후 즉시 리턴한다(런타임 오류). 이러한 panic 모드 실행 방식은 다시 상위 함수에도 똑같이 적용되고, 계속 콜스택을 타고 올라가며 적용된다. 그리고 마지막에는 프로그램이 에러를 내고 종료하게 된다. `func recover() any` 내장 함수는 panic() 함수에 의한 패닉 상태를 중단하고 panic() 함수 호출 시 전달했던 인자를 반환한다. panic() 함수 호출 시 런타임 에러가 발생해 즉시 호출 중이던 함수가 종료되기 때문에 recover() 함수를 defer문과 사용해야 한다.
 - `func new(Type) *Type` 내장 함수를 사용해 매개변수 타입에 대해 메모리를 할당(zero value를 할당)하고 포인터를 반환한다. 
+- struct에 명시적인 필드 이름 없이 타입만 명시해 embedded field를 사용할 수 있다. embedded field는 필드 이름 대신 타입을 사용해 접근할 수 있다.
 - struct의 필드로 struct를 사용할 수 있다. embedded type은 필드로 struct를 사용할 때 필드의 이름을 지정하지 않으면 된다. embedded type은 해당 struct를 통해 직접 접근 가능하다. 구조체 생성 시 필드 명은 해당 필드 타입을 그대로 사용하면 된다.
     ``` go
+    // example 2
+    // A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
+    type test struct {
+    	T1        // field name is T1
+    	*T2       // field name is T2
+    	P.T3      // field name is T3
+    	*P.T4     // field name is T4
+    	x, y int  // field names are x and y
+    }
+
+    // example 2
     type ClassInfo struct {
       Class int
       No int
@@ -139,3 +151,21 @@
 
 ### [예제로 배우는 Go 프로그래밍](http://golang.site/)
 - 함수가 결과와 에러를 함께 리턴한다면, 이 에러가 nil 인지를 체크해서 에러가 없는지를 체크할 수 있다. 또 다른 에러 처리로서 error의 타입을 체크(switch문)해서 에러 타입별로 별도의 에러 처리를 하는 방식이 있다.
+
+### [The Go Programming Language Specification](https://go.dev/ref/spec)
+- struct 필드에 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다.
+    ``` go
+    type test1 struct {
+    	x, y float64 ""  // an empty tag string is like an absent tag
+    	name string  "any string is permitted as a tag"
+    	_    [4]byte "ceci n'est pas un champ de structure"
+    }
+
+    // A struct corresponding to a TimeStamp protocol buffer.
+    // The tag strings define the protocol buffer field numbers;
+    // they follow the convention outlined by the reflect package.
+    type test2 struct {
+    	microsec  uint64 `protobuf:"1"`
+    	serverIP6 uint64 `protobuf:"2"`
+    }
+    ```
