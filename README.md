@@ -3,7 +3,7 @@
 
 ### [A Tour of Go](https://go.dev/tour/list)
 - golang은 package로 구성되며 golang으로 개발된 프로그램은 main package을 통해 실행된다.
-- `import` 키워드를 사용해 package를 import할 수 있다. 일반적으로 import 경로의 마지막 구성 요소를 package 이름으로 사용하는 것이 일반적이다.
+- `import` 키워드를 사용해 패키지가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)와 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 패키지 이름과 동일하게 짓는다. 이는 단일 module 내 여러 패키지를 구성하는 경우에도 동일하게 적용된다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
 - package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 내장 타입은 대문자로 시작하지 않아도 접근할 수 있다.
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
