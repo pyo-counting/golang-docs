@@ -3,11 +3,11 @@
 
 ### [A Tour of Go](https://go.dev/tour/list)
 - golang은 package로 구성되며 golang으로 개발된 프로그램은 main package을 통해 실행된다.
-- `import` 키워드를 사용해 패키지가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)와 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 패키지 이름과 동일하게 짓는다. 이는 단일 module 내 여러 패키지를 구성하는 경우에도 동일하게 적용(디렉토리 이름을 패키지 이름으로 짓는다)된다.
+- `import` 키워드를 사용해 package가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)와 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 package 이름과 동일하게 짓는다. 이는 단일 module 내 여러 package를 구성하는 경우에도 동일하게 적용(디렉토리 이름을 package 이름으로 짓는다)된다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
 - package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 내장 타입은 대문자로 시작하지 않아도 접근할 수 있다.
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
-- `var` 키워드를 사용해 변수를 선언할 수 있다. 변수 선언 시 초기화를 수행하면 변수의 타입을 생략할 수 있다. 
+- `var` 키워드를 사용해 변수를 선언할 수 있다. 변수 선언 시 초기화를 수행하면 변수의 타입을 생략할 수 있다.
 - 함수 내부에서는 `:=` short assignment statement만 이용해 변수를 선언 및 초기화할 수 있다. 함수 외부에서는 항상 키워드로 시작해야 하기 때문에 사용할 수 없다.
 - 변수 선언 시 초기화를 하지 않으면 zero value가 할당된다. 숫자 타입일 경우 0, boolean 타입일 경우 false, string 타입일 경우 ""
 - golang은 묵시적 형변환이 불가능하며 항상 `T(v)` 표현식을 사용해 타입 변환을 수행해야 한다.
@@ -21,7 +21,7 @@
 - `*T`는 포인터 타입으로 zero value은 `nil`이다. `&` 연산자는 피연산자의 포인터를 생성한다. `*`연산자는 포인터가 가리키는 값을 나타낸다. 포인터에 대한 산술 연산자는 없다.
 - struct는 필드의 집합으로 각 필드는 .을 이용해 접근한다. struct pointer의 경우 `(*p).X`을 통해 접근 가능하지만 번거롭기 때문에 `p.X`와 같이 접근하는 것을 허용한다. `type 이름 struct {필드목록}`문을 이용해 struct 타입을 정의할 수 있다.
 - `type` 키워드를 여러번 사용하는 대신 `type (...)`와 같이 사용할 수 있다.
-- struct 리터럴은 순서대로 값을 나열하거나 `Name:`처럼 필드의 이름과 값을 순서 상관없이 나열해 표현할 수 있다. 
+- struct 리터럴은 순서대로 값을 나열하거나 `Name:`처럼 필드의 이름과 값을 순서 상관없이 나열해 표현할 수 있다.
 - `[n]T` 타입은 배열이다. 배열의 크기는 배열 타입의 일부이기 때문에 크기를 조정할 수 없다.
 - `[]T` 타입은 슬라이스로 동적으로 크기 조절이 가능하며 배열보다 더 일반적으로 사용한다. 슬라이스는 내부적으로 배열을 가리키는 포인터, 길이, 용량 정보를 저장하며 zero value은 `nil`이다. 배열 또는 슬라이스 변수 a에 대해 `a[low:high]`의 표현식을 사용해 슬라이싱해 슬라이스 값을 얻을 수 있다.
 - 슬라이스의 길이는 슬라이스를 통해 접근할 수 있는 요소의 길이를 나타내며 용량은 실제 슬라이스가 참조가 있는 배열 길이를 나타낸다(슬라이스가 가리키는 첫 인덱스부터 배열의 마지막 인덱스까지).
@@ -65,11 +65,11 @@
         Error() string
     }
     ```
-- golang은 제네릭 함수, 제네릭 타입을 통해 제네릭스를 제공한다. 함수에 타입 파라미터를 추가함으로써 제네릭 함수를 정의할 수 있다. 아래는 예시다.
+- golang은 제네릭 함수, 제네릭 타입을 통해 제네릭스를 제공한다.
     ``` go
-    func Index[T comparable](s []T, x T) int
+    func Index[T comparable](s []T, x T) int {}
     ```
-    뿐만 아니라 `type` 키워드에 타입 파라미터를 추가함으로써 제네릭 타입을 정의할 수 있다. 아래는 예시다.
+    뿐만 아니라 `type` 키워드에 type parameter를 추가함으로써 제네릭 타입을 정의할 수 있다. 아래는 예시다.
     ``` go
     type List[T any] struct {
 	    next *List[T]
@@ -88,7 +88,7 @@
     func Println(a ...interface{}) (n int, err error){...}
     ```
 - `func panic(v any)` 내장 함수는 현재 함수를 즉시 멈추고 현재 함수에 defer 함수들을 모두 실행한 후 즉시 리턴한다(런타임 오류). 이러한 panic 모드 실행 방식은 다시 상위 함수에도 똑같이 적용되고, 계속 콜스택을 타고 올라가며 적용된다. 그리고 마지막에는 프로그램이 에러를 내고 종료하게 된다. `func recover() any` 내장 함수는 panic() 함수에 의한 패닉 상태를 중단하고 panic() 함수 호출 시 전달했던 인자를 반환한다. panic() 함수 호출 시 런타임 에러가 발생해 즉시 호출 중이던 함수가 종료되기 때문에 recover() 함수를 defer문과 사용해야 한다.
-- `func new(Type) *Type` 내장 함수를 사용해 매개변수 타입에 대해 메모리를 할당(zero value를 할당)하고 포인터를 반환한다. 
+- `func new(Type) *Type` 내장 함수를 사용해 매개변수 타입에 대해 메모리를 할당(zero value를 할당)하고 포인터를 반환한다.
 - struct에 명시적인 필드 이름 없이 타입만 명시해 embedded field를 사용할 수 있다. embedded field는 필드 이름 대신 타입을 사용해 접근할 수 있다.
 - struct의 필드로 struct를 사용할 수 있다. embedded type은 필드로 struct를 사용할 때 필드의 이름을 지정하지 않으면 된다. embedded type은 해당 struct를 통해 직접 접근 가능하다. 구조체 생성 시 필드 명은 해당 필드 타입을 그대로 사용하면 된다.
     ``` go
@@ -107,7 +107,7 @@
       Class int
       No int
     }
-    
+
     type Student struct {
       ClassInfo
       Name string
@@ -118,11 +118,11 @@
       Name:      "John",
       No:        10,
     }
-    
+
     fmt.Println(s1.No, s1.ClassInfo.No) // 10 1
     ```
 - 하나 이상의 작업을 동시에 진행하는 것을 동시성(concurrency)라 한다. golang에서는 goroutine, channel을 통해 동시성을 지원한다.
-- `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 실행되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다. 
+- `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 실행되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
 - `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 채널의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하는 예시다.
     ``` go
     var c chan string = make(chan string) // 양방향
@@ -154,7 +154,16 @@
 - 함수가 결과와 에러를 함께 리턴한다면, 이 에러가 nil 인지를 체크해서 에러가 없는지를 체크할 수 있다. 또 다른 에러 처리로서 error의 타입을 체크(switch문)해서 에러 타입별로 별도의 에러 처리를 하는 방식이 있다.
 
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
-- struct 필드에 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다.
+- identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
+- 아래 keyword(키워드)는 golang에 의해 예약됐기 때문에 identifier로 사용할 수없다.
+    ```
+    break        default      func         interface    select
+    case         defer        go           map          struct
+    chan         else         goto         package      switch
+    const        fallthrough  if           range        type
+    continue     for          import       return       var
+    ```
+- struct 타입은 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다.
     ``` go
     type test1 struct {
     	x, y float64 ""  // an empty tag string is like an absent tag
@@ -170,3 +179,138 @@
     	serverIP6 uint64 `protobuf:"2"`
     }
     ```
+- interface 타입은 method, 타입을 가질 수 있다.
+    - method 목록만 포함하는 경우 basic interface라고 부른다.
+    - 편의를 위해 universe block에는 empty interface의 alias declaration인 any 타입을 선언한다.
+        ``` go
+        // any is an alias for interface{} and is equivalent to interface{} in all ways.
+        type any = interface{}
+        ```
+    - 하나의 타입이 여러 interface를 구현할 수도 있다.
+    - interface는 다른 interface를 포함한 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다.
+    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. 타입은 T, ~T(underlying type이 T인 모든 타입), T1|T2|T3(union 연산자는 or) 형태로 명시할 수 있다. 이 때 interface 타입을 명시할 수는 없다. T는 type parameter가 될 수 없다. T1|T2|T3와 같이 여러 타입을 명시하는 경우 서로 교집합이 없어야 한다. 그리고 추가 제약 사항이 있다. predeclared identifier인 comparable, method를 명시한 interface, comparable을 포함하는 interface. general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
+        ``` go
+        // An interface representing only the type int.
+        interface {
+        	int
+        }
+
+        // An interface representing all types with underlying type int.
+        interface {
+        	~int
+        }
+
+        // An interface representing all types with underlying type int that implement the String method.
+        interface {
+        	~int
+        	String() string
+        }
+
+        // An interface representing an empty type set: there is no type that is both an int and a string.
+        interface {
+        	int
+        	string
+        }
+
+        type MyInt int
+
+        interface {
+        	~[]byte  // the underlying type of []byte is itself
+        	~MyInt   // illegal: the underlying type of MyInt is not MyInt
+        	~error   // illegal: error is an interface
+        }
+
+        // The Float interface represents all floating-point types
+        // (including any named types whose underlying types are
+        // either float32 or float64).
+        type Float interface {
+        	~float32 | ~float64
+        }
+
+        var x Float                     // illegal: Float is not a basic interface
+
+        var x interface{} = Float(nil)  // illegal
+
+        type Floatish struct {
+        	f Float                 // illegal
+        }
+
+        // illegal: Bad may not embed itself
+        type Bad interface {
+        	Bad
+        }
+
+        // illegal: Bad1 may not embed itself using Bad2
+        type Bad1 interface {
+        	Bad2
+        }
+        type Bad2 interface {
+        	Bad1
+        }
+
+        // illegal: Bad3 may not embed a union containing Bad3
+        type Bad3 interface {
+        	~int | ~string | Bad3
+        }
+
+        // illegal: Bad4 may not embed an array containing Bad4 as element type
+        type Bad4 interface {
+        	[10]Bad4
+        }
+        ```
+    - 타입 T가 interfaece I를 구현(implement)하는 조건은 다음과 같다.
+	    - T가 interface가 아닌 경우, T가 I의 타입 집합에 속해야 한다.
+	    - T가 interface인 경우, T의 타입 집합이 I의 타입 집합의 부분 집합이어야 한다.
+- universe block은 모든 golang 소스 코드를 포함한다. 아래 identifier는 universe block에 선언된 predeclared identifier다. [builtin](https://pkg.go.dev/builtin) package documentation을 통해 확인할 수 있다. builtin package는 단순히 golang documentation을 위해 작성된 코드이다.
+    ```
+    Types:
+    	any bool byte comparable
+    	complex64 complex128 error float32 float64
+    	int int8 int16 int32 int64 rune string
+    	uint uint8 uint16 uint32 uint64 uintptr
+
+    Constants:
+    	true false iota
+
+    Zero value:
+    	nil
+
+    Functions:
+    	append cap clear close complex copy delete imag len
+    	make max min new panic print println real recover
+    ```
+- type declaration(타입 선언)은 타입에 identifier(타입 이름)을 바인딩하는 것을 말한다. alias declaration, type definition 두 가지 종류가 있다.
+    - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 해당 타입을 type parameter로는 사용할 수 없다.
+        ``` go
+        type (
+        	nodeList          = []*Node     // nodeList and []*Node are identical types
+            Polar             = polar       // Polar and polar denote identical types
+            set[P comparable] = map[P]bool  // generic alias
+            A[P any]          = P           // illegal: P is a type parameter
+        )
+        ```
+    - type definition은 기존 타입과 동일한 기능을 제공하지만 독립적인 새로운 타입을 identifier(타입 이름)에 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic type이라고 부른다. generic type에 대한 method 정의시 receiver에도 동일한 type parameter를 명시해야 한다. 해당 타입을 type parameter로는 사용할 수 없다.
+        ``` go
+        type (
+        	Point struct{ x, y float64 }  // Point and struct{ x, y float64 } are different types
+        	polar Point                   // polar and Point denote different types
+        )
+
+        type TreeNode struct {
+        	left, right *TreeNode
+        	value any
+        }
+
+        type Block interface {
+        	BlockSize() int
+        	Encrypt(src, dst []byte)
+        	Decrypt(src, dst []byte)
+        }
+
+        type T[P any] P    // illegal: P is a type parameter
+
+        func f[T any]() {
+        	type L T   // illegal: T is a type parameter declared by the enclosing function
+        }
+        ```
+- type parameter(타입 파라미터)는 제네릭 함수, 제네릭 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 제네릭 함수, 제네락 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다. 만약 제약 조건을 만족하지 못하는 경우 컴파일 실패한다. 아래는 예시다.
