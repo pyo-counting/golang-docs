@@ -313,4 +313,22 @@
         	type L T   // illegal: T is a type parameter declared by the enclosing function
         }
         ```
-- type parameter(타입 파라미터)는 제네릭 함수, 제네릭 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 제네릭 함수, 제네락 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다. 만약 제약 조건을 만족하지 못하는 경우 컴파일 실패한다. 아래는 예시다.
+- type parameter(타입 파라미터)는 제네릭 함수, 제네릭 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 제네릭 함수, 제네락 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
+    - 단일 type parameter를 사용하는 경우 파싱의 모호성이 생길 수 있다. 이러한 특이 케이스에서 일반적인 표현식으로 해석될 수도 있다. 이를 해결하기 위해 interface로 감싸거나 끝에 ,를 추가할 수 있다.
+        ``` go
+        
+        type T[P *C] …   // `P *C`가 포인터 타입으로 해석될 수도 있음
+        type T[P (C)] …  // `P (C)`가 타입 변환으로 해석될 수도 있음
+        type T[P *C|Q] … // `*C | Q`가 비트 연산자로 해석될 수도 있음
+        ```
+    - 제네릭 타입 T의 type parameter 목록에 type constraint T를 직접적으로 또는 간접적으로 참조할 수 없다. 이는 순환 참조, 타입의 정의가 완전히 확정되지 않은 상태에서 자신을 의존하는 모순적인 상황을 만들 수 있기 때문에 금지된다.
+    ``` go
+    type T1[P T1[P]] …                    // illegal: T1 refers to itself
+    type T2[P interface{ T2[int] }] …     // illegal: T2 refers to itself
+    type T3[P interface{ m(T3[int])}] …   // illegal: T3 refers to itself
+    type T4[P T5[P]] …                    // illegal: T4 refers to T5 and
+    type T5[P T4[P]] …                    //          T5 refers to T4
+    
+    type T6[P int] struct{ f *T6[P] }     // ok: reference to T6 is not in type parameter list
+    ```
+    - 제약 조건을 만족하지 못하는 경우 컴파일 실패한다. 아래는 예시다.
