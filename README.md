@@ -188,7 +188,7 @@
         ```
     - 하나의 타입이 여러 interface를 구현할 수도 있다.
     - interface는 다른 interface를 포함한 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다.
-    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. 타입은 T, ~T(underlying type이 T인 모든 타입), T1|T2|T3(union 연산자는 or) 형태로 명시할 수 있다. 이 때 interface 타입을 명시할 수는 없다. T는 type parameter가 될 수 없다. T1|T2|T3와 같이 여러 타입을 명시하는 경우 서로 교집합이 없어야 한다. 그리고 추가 제약 사항이 있다. predeclared identifier인 comparable, method를 명시한 interface, comparable을 포함하는 interface. general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
+    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. 타입은 `T`, `~T`(underlying type이 T인 모든 타입), `T1|T2|T3`(union 연산자는 or) 형태로 명시할 수 있다. T는 type parameter가 될 수 없다. ~T와 같이 underying type을 명시하는 경우 T 자체가 underying type이어야 한다(그리고 T에 interface 타입을 사용할 ). T1|T2|T3와 같이 여러 타입을 명시하는 경우 서로 교집합이 없어야 한다(추가 제약 사항이 있다. predeclared identifier인 comparable, method를 명시한 interface, comparable을 포함하는 interface를 사용할 수 없다). general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
         ``` go
         // An interface representing only the type int.
         interface {
@@ -279,6 +279,8 @@
     	append cap clear close complex copy delete imag len
     	make max min new panic print println real recover
     ```
+- 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다. slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다. type parameter가 아닌 interface 타입도 비교가 가능하다. 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나, dynamic 타입, dynamic 값이 동일한 경우다. type parameter는 엄격한 비교가 가능한(strictly comparable, 기본적으로 비교 연산자 사용이 가능하며 interface 타입이 아니고 interface 타입으로 구성되지 않은 타입) 경우에만 비교가 가능하다.
+- gerneral interface인 comparable은 엄격한 비교가 가능한 모든 non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 엄격한 비교가 가능하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용하며 변수의 타입으로는 사용할 수 없다.
 - type declaration(타입 선언)은 타입에 identifier(타입 이름)을 바인딩하는 것을 말한다. alias declaration, type definition 두 가지 종류가 있다.
     - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 해당 타입을 type parameter로는 사용할 수 없다.
         ``` go
@@ -314,9 +316,8 @@
         }
         ```
 - type parameter(타입 파라미터)는 제네릭 함수, 제네릭 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 제네릭 함수, 제네락 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
-    - 단일 type parameter를 사용하는 경우 파싱의 모호성이 생길 수 있다. 이러한 특이 케이스에서 일반적인 표현식으로 해석될 수도 있다. 이를 해결하기 위해 interface로 감싸거나 끝에 ,를 추가할 수 있다.
+    - 단일 type parameter를 사용하는 경우 파싱의 모호성이 생길 수 있다. 이러한 특이 케이스에서 type parameter가 아닌 일반적인 표현식으로 해석될 수도 있다. 이를 해결하기 위해 interface로 감싸거나 끝에 ,를 추가할 수 있다.
         ``` go
-        
         type T[P *C] …   // `P *C`가 포인터 타입으로 해석될 수도 있음
         type T[P (C)] …  // `P (C)`가 타입 변환으로 해석될 수도 있음
         type T[P *C|Q] … // `*C | Q`가 비트 연산자로 해석될 수도 있음
@@ -328,7 +329,14 @@
     type T3[P interface{ m(T3[int])}] …   // illegal: T3 refers to itself
     type T4[P T5[P]] …                    // illegal: T4 refers to T5 and
     type T5[P T4[P]] …                    //          T5 refers to T4
-    
+
     type T6[P int] struct{ f *T6[P] }     // ok: reference to T6 is not in type parameter list
     ```
-    - 제약 조건을 만족하지 못하는 경우 컴파일 실패한다. 아래는 예시다.
+- type constraint는 interface로 type parameter의 type argument로 사용할 수 있는 타입과 연산자를 제한한다. 표현식 `interface{E}`와 같이 표현하며 E가 method가 아닌 경우 단순하게 `E`로 표현할 수 있다.
+    ``` go
+    [T []P]                      // = [T interface{[]P}]
+    [T ~int]                     // = [T interface{~int}]
+    [T int|string]               // = [T interface{int|string}]
+    ```
+    - 
+- built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
