@@ -179,16 +179,25 @@
     	serverIP6 uint64 `protobuf:"2"`
     }
     ```
-- interface 타입은 method, 타입을 가질 수 있다.
-    - method 목록만 포함하는 경우 basic interface라고 부른다.
-    - 편의를 위해 universe block에는 empty interface의 alias declaration인 any 타입을 선언한다.
+- interface 타입은 type set(타입 집합)을 정의한다. interface 타입의 변수는 interface의 type set(interface를 구현한 non-interface 타입)의 값을 저장할 수 있다. interface 타입은 method, 타입을 가질 수 있다.
+    - method 목록만 포함하는 경우 basic interface라고 부른다. basic interface의 type set은 모든 method를 구현헤야 한다.
         ``` go
-        // any is an alias for interface{} and is equivalent to interface{} in all ways.
-        type any = interface{}
+        // A simple File interface.
+        interface {
+            Read([]byte) (int, error)
+            Write([]byte) (int, error)
+            Close() error
+        }
         ```
-    - 하나의 타입이 여러 interface를 구현할 수도 있다.
-    - interface는 다른 interface를 포함한 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다.
-    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. 타입은 `T`, `~T`(underlying type이 T인 모든 타입), `T1|T2|T3`(union 연산자는 or) 형태로 명시할 수 있다. T는 type parameter가 될 수 없다. ~T와 같이 underying type을 명시하는 경우 T 자체가 underying type이어야 한다(그리고 T에 interface 타입을 사용할 ). T1|T2|T3와 같이 여러 타입을 명시하는 경우 서로 교집합이 없어야 한다(추가 제약 사항이 있다. predeclared identifier인 comparable, method를 명시한 interface, comparable을 포함하는 interface를 사용할 수 없다). general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
+        - method 이름은 유일해야 하며 blank(`_`) 이면 안된다.
+        - 하나의 타입이 여러 interface를 구현할 수도 있다.
+        - empty interface는 모든 non-interface가 구현한다. 편의를 위해 universe block에는 empty interface의 alias declaration인 any 타입을 선언한다.
+            ``` go
+            // any is an alias for interface{} and is equivalent to interface{} in all ways.
+            type any = interface{}
+            ```
+    - interface는 다른 interface를 포함하는 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다. interface의 type set에는 interface가 포함되지 않음을 유의해야 한다. 즉 interface는 type set을 정의하는 개념으로 사용되기 때문에 interface 자체가 type set의 목록에 포함되지 않는다. embedded interface의 경우 type set은 관련 interface에 속한 모든 method를 구현한 non-interface 타입이다.
+    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다.
         ``` go
         // An interface representing only the type int.
         interface {
@@ -211,56 +220,64 @@
         	int
         	string
         }
-
-        type MyInt int
-
-        interface {
-        	~[]byte  // the underlying type of []byte is itself
-        	~MyInt   // illegal: the underlying type of MyInt is not MyInt
-        	~error   // illegal: error is an interface
-        }
-
-        // The Float interface represents all floating-point types
-        // (including any named types whose underlying types are
-        // either float32 or float64).
-        type Float interface {
-        	~float32 | ~float64
-        }
-
-        var x Float                     // illegal: Float is not a basic interface
-
-        var x interface{} = Float(nil)  // illegal
-
-        type Floatish struct {
-        	f Float                 // illegal
-        }
-
-        // illegal: Bad may not embed itself
-        type Bad interface {
-        	Bad
-        }
-
-        // illegal: Bad1 may not embed itself using Bad2
-        type Bad1 interface {
-        	Bad2
-        }
-        type Bad2 interface {
-        	Bad1
-        }
-
-        // illegal: Bad3 may not embed a union containing Bad3
-        type Bad3 interface {
-        	~int | ~string | Bad3
-        }
-
-        // illegal: Bad4 may not embed an array containing Bad4 as element type
-        type Bad4 interface {
-        	[10]Bad4
-        }
         ```
+        - 타입은 `T`, `~T`(underlying type이 T인 모든 타입), `T1|T2|T3`(union 연산자는 or) 형태로 명시할 수 있다.
+            - T에는 type parameter(~T도 불가)를 사용할 수 없다.
+            - ~T에 underying type을 명시하는 경우 T 자체가 underying type이어야 한다. 그리고 interface를 사용할 수 없다.
+                ``` go
+                type MyInt int
+
+                interface {
+                	~[]byte  // the underlying type of []byte is itself
+                	~MyInt   // illegal: the underlying type of MyInt is not MyInt
+                	~error   // illegal: error is an interface
+                }
+                ```
+            - T1|T2|T3처럼 여러 타입을 명시하는 경우 서로 교집합이 없어야 한다. 이 때 추가적인 제약 사항이 있다. predeclared identifier인 comparable을 포함할 수 없다. method를 갖는 interface를 포함할 수 없다. comparable을 embede할 수 없다. method을 포함한 interface를 embed할 수 없다.
+                ``` go
+                // The Float interface represents all floating-point types
+                // (including any named types whose underlying types are
+                // either float32 or float64).
+                type Float interface {
+                	~float32 | ~float64
+                }
+                ```
+             - general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
+                ``` go
+                var x Float                     // illegal: Float is not a basic interface
+    
+                var x interface{} = Float(nil)  // illegal
+    
+                type Floatish struct {
+                	f Float                 // illegal
+                }
+    
+                // illegal: Bad may not embed itself
+                type Bad interface {
+                	Bad
+                }
+    
+                // illegal: Bad1 may not embed itself using Bad2
+                type Bad1 interface {
+                	Bad2
+                }
+                type Bad2 interface {
+                	Bad1
+                }
+    
+                // illegal: Bad3 may not embed a union containing Bad3
+                type Bad3 interface {
+                	~int | ~string | Bad3
+                }
+    
+                // illegal: Bad4 may not embed an array containing Bad4 as element type
+                type Bad4 interface {
+                	[10]Bad4
+                }
+                ```
     - 타입 T가 interfaece I를 구현(implement)하는 조건은 다음과 같다.
-	    - T가 interface가 아닌 경우, T가 I의 타입 집합에 속해야 한다.
-	    - T가 interface인 경우, T의 타입 집합이 I의 타입 집합의 부분 집합이어야 한다.
+	    - T가 interface가 아닌 경우, T가 I의 type set에 속한다.
+	    - T가 interface인 경우, T의 type set이 I의 type set의 부분 집합이다.
 - universe block은 모든 golang 소스 코드를 포함한다. 아래 identifier는 universe block에 선언된 predeclared identifier다. [builtin](https://pkg.go.dev/builtin) package documentation을 통해 확인할 수 있다. builtin package는 단순히 golang documentation을 위해 작성된 코드이다.
     ```
     Types:
@@ -279,7 +296,7 @@
     	append cap clear close complex copy delete imag len
     	make max min new panic print println real recover
     ```
-- 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다. slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다. type parameter가 아닌 interface 타입도 비교가 가능하다. 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나, dynamic 타입, dynamic 값이 동일한 경우다. type parameter는 엄격한 비교가 가능한(strictly comparable, 기본적으로 비교 연산자 사용이 가능하며 interface 타입이 아니고 interface 타입으로 구성되지 않은 타입) 경우에만 비교가 가능하다.
+- 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다. slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다. type parameter가 아닌 interface 타입도 비교가 가능하다. 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나, dynamic 타입과 dynamic 값이 동일한 경우다. type parameter는 엄격한 비교가 가능한(strictly comparable, 기본적으로 비교 연산자 사용이 가능하며 interface 타입이 아니고 interface 타입으로 구성되지 않은 타입) 경우에만 비교가 가능하다.
 - gerneral interface인 comparable은 엄격한 비교가 가능한 모든 non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 엄격한 비교가 가능하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용하며 변수의 타입으로는 사용할 수 없다.
 - type declaration(타입 선언)은 타입에 identifier(타입 이름)을 바인딩하는 것을 말한다. alias declaration, type definition 두 가지 종류가 있다.
     - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 해당 타입을 type parameter로는 사용할 수 없다.
