@@ -305,7 +305,7 @@
     - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 해당 타입을 type parameter로는 사용할 수 없다.
         ``` go
         type (
-        	nodeList          = []*Node     // nodeList and []*Node are identical types
+            nodeList          = []*Node     // nodeList and []*Node are identical types
             Polar             = polar       // Polar and polar denote identical types
             set[P comparable] = map[P]bool  // generic alias
             A[P any]          = P           // illegal: P is a type parameter
@@ -341,6 +341,9 @@
         type T[P *C] …   // `P *C`가 포인터 타입으로 해석될 수도 있음
         type T[P (C)] …  // `P (C)`가 타입 변환으로 해석될 수도 있음
         type T[P *C|Q] … // `*C | Q`가 비트 연산자로 해석될 수도 있음
+
+        type T[P interface{*C}] …
+        type T[P *C,] …
         ```
     - 제네릭 타입 T의 type parameter 목록에 type constraint T를 직접적으로 또는 간접적으로 참조할 수 없다. 이는 순환 참조, 타입의 정의가 완전히 확정되지 않은 상태에서 자신을 의존하는 모순적인 상황을 만들 수 있기 때문에 금지된다.
     ``` go
@@ -352,7 +355,7 @@
 
     type T6[P int] struct{ f *T6[P] }     // ok: reference to T6 is not in type parameter list
     ```
-- type constraint는 interface로 type parameter의 type argument로 사용할 수 있는 타입과 연산자를 제한한다. 표현식 `interface{E}`와 같이 표현하며 E가 method가 아닌 경우 단순하게 `E`로 표현할 수 있다.
+- type constraint는 interface로 type parameter의 type argument로 사용할 수 있는 타입과 연산를 제한한다. 표현식 `interface{E}`와 같이 표현하며 E가 method가 아닌 경우 단순하게 `E`로 표현할 수 있다.
     ``` go
     [T []P]                      // = [T interface{[]P}]
     [T ~int]                     // = [T interface{~int}]
