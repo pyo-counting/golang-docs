@@ -245,18 +245,18 @@
              - general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
                 ``` go
                 var x Float                     // illegal: Float is not a basic interface
-    
+
                 var x interface{} = Float(nil)  // illegal
-    
+
                 type Floatish struct {
                 	f Float                 // illegal
                 }
-    
+
                 // illegal: Bad may not embed itself
                 type Bad interface {
                 	Bad
                 }
-    
+
                 // illegal: Bad1 may not embed itself using Bad2
                 type Bad1 interface {
                 	Bad2
@@ -264,12 +264,12 @@
                 type Bad2 interface {
                 	Bad1
                 }
-    
+
                 // illegal: Bad3 may not embed a union containing Bad3
                 type Bad3 interface {
                 	~int | ~string | Bad3
                 }
-    
+
                 // illegal: Bad4 may not embed an array containing Bad4 as element type
                 type Bad4 interface {
                 	[10]Bad4
@@ -361,5 +361,6 @@
     [T ~int]                     // = [T interface{~int}]
     [T int|string]               // = [T interface{int|string}]
     ```
-    - 
+    - typa parameter가 아닌 interface는 비교 가능하지만 strictly comparable하지 않지만(comparable interface를 구현하지는 않음) comparable interface를 충족할 수 있다.
+    - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 만족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
