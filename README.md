@@ -3,7 +3,8 @@
 
 ### [A Tour of Go](https://go.dev/tour/list)
 - golang은 package로 구성되며 golang으로 개발된 프로그램은 main package을 통해 실행된다.
-- `import` 키워드를 사용해 package가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)와 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 package 이름과 동일하게 짓는다. 이는 단일 module 내 여러 package를 구성하는 경우에도 동일하게 적용(디렉토리 이름을 package 이름으로 짓는다)된다.
+- `import` 키워드를 사용해 package가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)과 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 package 이름과 동일하게 짓는다. 이는 단일 module 내 여러 package를 구성하는 경우에도 동일하게 적용(디렉토리 이름을 package 이름으로 짓는다)된다.
+    - go 프로그램은 package로 구성된다. package는 동일 디렉토리에 있는 소스 파일의 집합으로 같이 컴파일된다. repository는 보통 1개 이상의 module을 포함한다. module은 package의 집합으로 같이 릴리즈된다. 일반적으로 repository는 루트 디렉토리 1개의 module만 포함(`go.mod` 파일을 통해 module의 경로를 명시)한다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
 - package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 내장 타입은 대문자로 시작하지 않아도 접근할 수 있다.
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
@@ -154,6 +155,7 @@
 - 함수가 결과와 에러를 함께 리턴한다면, 이 에러가 nil 인지를 체크해서 에러가 없는지를 체크할 수 있다. 또 다른 에러 처리로서 error의 타입을 체크(switch문)해서 에러 타입별로 별도의 에러 처리를 하는 방식이 있다.
 
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
+- 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
 - 아래 keyword(키워드)는 golang에 의해 예약됐기 때문에 identifier로 사용할 수없다.
     ```
@@ -223,7 +225,7 @@
         ```
         - 타입은 `T`, `~T`(underlying type이 T인 모든 타입), `T1|T2|T3`(union 연산자는 or) 형태로 명시할 수 있다.
             - T에는 type parameter(~T도 불가)를 사용할 수 없다.
-            - ~T에 underying type을 명시하는 경우 T 자체가 underying type이어야 한다. 그리고 interface를 사용할 수 없다.
+            - ~T에는 underying type을 사용할 수 있다. 그리고 interface를 사용할 수 없다.
                 ``` go
                 type MyInt int
 
@@ -278,6 +280,7 @@
     - 타입 T가 interfaece I를 구현(implement)하는 조건은 다음과 같다.
 	    - T가 interface가 아닌 경우, T가 I의 type set에 속한다.
 	    - T가 interface인 경우, T의 type set이 I의 type set의 부분 집합이다.
+- map의 key 타입은 비교 가능한 타입( `==`, `!=`)이어야 한다. 만약 key 타입이 interface라면 dynamic type에 대해 비교 연산이 가능해야 한다.
 - universe block은 모든 golang 소스 코드를 포함한다. 아래 identifier는 universe block에 선언된 predeclared identifier다. [builtin](https://pkg.go.dev/builtin) package documentation을 통해 확인할 수 있다. builtin package는 단순히 golang documentation을 위해 작성된 코드이다.
     ```
     Types:
@@ -297,7 +300,7 @@
     	make max min new panic print println real recover
     ```
 - 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
-    - type parameter가 아닌 interface 타입은 비교가 가능하다. 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교가능하지 않을 경우 runtime panic이 발생할 수 있다.
+    - type parameter가 아닌 interface 타입은 비교가 가능하다(type parameter는 strictle comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교가능하지 않을 경우 runtime panic이 발생할 수 있다.
     - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
     - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
 - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
@@ -336,6 +339,15 @@
         }
         ```
 - type parameter(타입 파라미터)는 제네릭 함수, 제네릭 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 제네릭 함수, 제네락 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
+    ``` go
+    func PrintKeyValue[K ~string, V int](k K, v V) {
+	    fmt.Printf("key: %v, value: %v\n", k, v)
+    }
+
+    func main() {
+    	PrintKeyValue[string, int]("first", 1) // can call PrintKeyValue("first", 1)
+    }
+    ```
     - 단일 type parameter를 사용하는 경우 파싱의 모호성이 생길 수 있다. 이러한 특이 케이스에서 type parameter가 아닌 일반적인 표현식으로 해석될 수도 있다. 이를 해결하기 위해 interface로 감싸거나 끝에 ,를 추가할 수 있다.
         ``` go
         type T[P *C] …   // `P *C`가 포인터 타입으로 해석될 수도 있음
@@ -361,6 +373,6 @@
     [T ~int]                     // = [T interface{~int}]
     [T int|string]               // = [T interface{int|string}]
     ```
-    - typa parameter가 아닌 interface는 비교 가능하지만 strictly comparable하지 않지만(comparable interface를 구현하지는 않음) comparable interface를 충족할 수 있다.
+    - interface는 비교 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현과 type constraint에 대한 충족은 다른 의미로 생각해야 함).
     - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 만족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
