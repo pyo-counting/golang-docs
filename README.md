@@ -300,12 +300,12 @@
     	make max min new panic print println real recover
     ```
 - 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
-    - type parameter가 아닌 interface 타입은 비교가 가능하다(type parameter는 strictle comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교가능하지 않을 경우 runtime panic이 발생할 수 있다.
+    - type parameter가 아닌 interface 타입은 비교가 가능하다(type parameter는 strictle comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교 가능하지 않을 경우 runtime panic이 발생할 수 있다.
     - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
     - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
 - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
 - type declaration(타입 선언)은 타입에 identifier(타입 이름)을 바인딩하는 것을 말한다. alias declaration, type definition 두 가지 종류가 있다.
-    - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 해당 타입을 type parameter로는 사용할 수 없다.
+    - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 이 때 type parameter를 대상 타입으로 사용할 수 없다.
         ``` go
         type (
             nodeList          = []*Node     // nodeList and []*Node are identical types
@@ -314,7 +314,7 @@
             A[P any]          = P           // illegal: P is a type parameter
         )
         ```
-    - type definition은 기존 타입과 동일한 기능을 제공하지만 독립적인 새로운 타입을 identifier(타입 이름)에 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic type이라고 부른다. generic type에 대한 method 정의시 receiver에도 동일한 type parameter를 명시해야 한다. 해당 타입을 type parameter로는 사용할 수 없다.
+    - type definition은 기존 타입과 동일한 기능을 제공하지만 독립적인 새로운 타입을 identifier(타입 이름)에 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic type이라고 부른다. generic type에 대한 method 정의시 receiver에도 동일한 type parameter를 명시해야 한다. 이 때 type parameter를 대상 타입으로 사용할 수 없다.
         ``` go
         type (
         	Point struct{ x, y float64 }  // Point and struct{ x, y float64 } are different types
@@ -373,6 +373,6 @@
     [T ~int]                     // = [T interface{~int}]
     [T int|string]               // = [T interface{int|string}]
     ```
+    - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
     - interface는 비교 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현과 type constraint에 대한 충족은 다른 의미로 생각해야 함).
-    - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 만족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
