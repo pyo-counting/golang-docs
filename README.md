@@ -165,6 +165,7 @@
     const        fallthrough  if           range        type
     continue     for          import       return       var
     ```
+- byte는 uint8 타입, rune은 int32의 alias declaration이다.
 - struct 타입은 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다.
     ``` go
     type test1 struct {
@@ -375,4 +376,16 @@
     ```
     - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
     - interface는 비교 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현과 type constraint에 대한 충족은 다른 의미로 생각해야 함).
+- `*`, `<-` 연산자로 시작하는 타입과 func keyword로 시작하지만 리턴 목록이 없는 타입은 모호성을 피하기 위해 필요한 경우 소괄호로 표현해야 한다.
+    ``` go
+    *Point(p)        // same as *(Point(p))
+    (*Point)(p)      // p is converted to *Point
+    <-chan int(c)    // same as <-(chan int(c))
+    (<-chan int)(c)  // c is converted to <-chan int
+    func()(x)        // function signature func() x
+    (func())(x)      // x is converted to func()
+    (func() int)(x)  // x is converted to func() int
+    func() int(x)    // x is converted to func() int (unambiguous)
+    ```
+- 
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
