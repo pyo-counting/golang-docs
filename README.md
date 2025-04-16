@@ -124,14 +124,41 @@
     ```
 - 하나 이상의 작업을 동시에 진행하는 것을 동시성(concurrency)라 한다. golang에서는 goroutine, channel을 통해 동시성을 지원한다.
 - `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 실행되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
-- `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 채널의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하는 예시다.
+- `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 채널의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하고 메시지를 송수신하는 예시다.
     ``` go
-    var c chan string = make(chan string) // 양방향
+    package main
+    
+    import (
+        "fmt"
+        "time"
+    )
+    
+    func pinger(c chan string) {
+        for i := 0; ; i++ {
+            c <- "ping" // 송신
+        }
+    }
+    func printer(c chan string) {
+        for {
+            msg := <- c // 수신
+            fmt.Println(msg)
+            time.Sleep(time.Second * 1)
+        }
+    }
+    func main() {
+        var c chan string = make(chan string) // 송수신 channel 생성
+    
+        go pinger(c)
+        go printer(c)
+    
+        var input string
+        fmt.Scanln(&input)
+    }
     ```
-- channel 타입에 `<-` 연산자를 지정해 수신 또는 송신 전용 channel을 생성할 수 있다. 기본적으로 해당 연산자를 사용하지 않고 생성하면 양방향 channel 타입을 의미한다. 아래는 예시다.
+- channel 타입에 `<-` 연산자를 지정해 수신 또는 송신 전용 channel을 생성할 수 있다. 기본적으로 해당 연산자를 사용하지 않고 생성하면 양방향 channel 타입을 의미한다. 만약 송신 전용 channel에 대해 수신 연산을 수행할 경우 compile 오류가 발생한다(반대도 동일).아래는 예시다.
     ``` go
-    var c1 chan<- string = make(chan<- string) // 수신 전용
-    var c2 <-chan string = make(<-chan string) // 송신 전용
+    var c1 chan<- string = make(chan<- string) // 송신 전용
+    var c2 <-chan string = make(<-chan string) // 수신 전용
     ```
 - `switch`문과 유사한 `select`문은 준비된(수신받을 메시지가 있거나 보낼 메시지가 있는 경우) channel의 case문을 실행한다. 하나 이상의 channel이 준비되면 어느 channel로부터 메시지를 받을지 무작위로 선택한다. 준비된 channel이 없으면 사용 가능해질 때까지 문장 실행이 차단된다. default case는 준비된 channel이 없을 경우 즉시 실행된다. 아래는 예시다. select 문을 계속 실행하기 위해 for {...}문 내에서 사용할 수 있다.
     ``` go
