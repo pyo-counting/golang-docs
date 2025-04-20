@@ -15,7 +15,7 @@
 - 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추른된다.
 - `const` 키워드를 사용해 상수를 선언할 수 있다. 상수는 문자, 문자열, boolean, 숫자 타입일 수 있다(`:=` short assignment statement는 변수 선언시 사용되기 때문에 상수에 대해서는 사용할 수 없다).
 - 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 갖게된다.
-- 반복문을 위해 `for` 키워드만 지원한다. ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다.
+- 반복문을 위해 `for` 키워드만 지원한다. ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `for ... range` 문에서 slice, 배열, map, int, string을 사용해 반복할 수 있다.
 - `if`문도 `for`문과 동일하게 ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `if`문에 short assignment statement를 사용할 수 있으며 해당 변수는 `else if`, `else` 블럭에서도 사용할 수 있다.
 - `switch 테스트 표현식 {...}`문에는 `break`문을 명시할 필요없다. 테스트 표현식을 생략하는 경우 `switch true {...}`와 동일하다.
 - `defer`문은 함수의 반환까지 함수의 실행을 연기한다. 함수의 매개변수는 `defer`문에서 결정되지만 호출은 지연된다. 지연된 함수는 stack에 push되며 LIFO로 실행된다.
@@ -82,8 +82,8 @@
 
 ### [GO 프로그래밍 입문](https://codingnuri.com/golang-book/)
 - 문자열은 "(double quote), `(backtick)을 사용해 표현할 수 있다. double quote로 표현하는 문자열은 줄바꿈을 포함할 수 없으며 이스케이프 문자열 사용할 수 있다. backtick으로 표현하는 문자열은 줄바꿈을 포함할 수 있으며 이스케이프 문자열을 지원하지 않는다.
-- 문자열은 바이트로 표현되기 때문에 `"hello world"[4]`와 같이 인덱스를 통해 접근 가능하다. 문자열에 `len(s)` 함수를 사용해 길이를 확인할 수 있다.
-- 함수 정의 시 가변 인자를 사용할 수 있다. 이 때 해당 가변 인자는 함수 내에서 배열로 접근할 수 있다. 함수 호출 시에는 가변 인자에 개별 인자, 배열, 슬라이스를 사용할 수 있다.
+- 문자열은 byte slice(`[]byte`) 표현되기 때문에 `"hello world"[4]`와 같이 인덱스를 통해 접근 가능하다. 문자열에 `len(s)` 함수를 사용해 길이를 확인할 수 있다.
+- 함수 정의 시 가변 인자를 사용할 수 있다. 이 때 해당 가변 인자는 함수 내에서 슬라이스로 접근할 수 있다. 함수 호출 시에는 가변 인자에 개별 인자, 배열, 슬라이스를 사용할 수 있다. 슬라이스를 매개변수로 사용 시 `fmt.Println(sli...)`와 같이 호출해야 한다.
     ``` go
     // fmt.Println() 함수 예시
     func Println(a ...interface{}) (n int, err error){...}
@@ -180,6 +180,20 @@
 
 ### [예제로 배우는 Go 프로그래밍](http://golang.site/)
 - 함수가 결과와 에러를 함께 리턴한다면, 이 에러가 nil 인지를 체크해서 에러가 없는지를 체크할 수 있다. 또 다른 에러 처리로서 error의 타입을 체크(switch문)해서 에러 타입별로 별도의 에러 처리를 하는 방식이 있다.
+
+### [Go by Example](https://gobyexample.com/)
+- Arrays
+    - 컴파일러 시점에 배열의 개수를 결정하도록 정의할 수 있다.
+    - `:`를 사용해 인덱스를 지정할 수 있다.
+    ``` go
+    b = [...]int{1, 2, 3, 4, 5}
+    b = [...]int{100, 3: 400, 500}
+    ```
+- Slices
+    - Slices 내장 패키지는 slice를 위한 다양한 기능을 제공한다.
+- Strings and Runes
+    - 문자열은 읽기 전용 byte slice(`[]byte`) 타입이다. go 언어의 문자열은 기본적을 UTF-8 인코딩을 사용한다. 다른 언어에서는 문자열은 character로 구성되지만 go 언어에서는 rune(int32 타입의 alias)이라는 타입을 사용한다.
+    - rune literal은 single quote로 표현 가능하다. 예를 들어 'a', '1' '한'
 
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
@@ -332,6 +346,30 @@
     - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
     - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
 - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
+- constant declaration에서 predeclared identifier인 `iota`은 index를 나타낸다. `iota`는 주로 enum을 정의하는데 사용된다.
+    ``` go
+    const (
+    	c0 = iota  // c0 == 0
+    	c1 = iota  // c1 == 1
+    	c2 = iota  // c2 == 2
+    )
+
+    const (
+    	a = 1 << iota  // a == 1  (iota == 0)
+    	b = 1 << iota  // b == 2  (iota == 1)
+    	c = 3          // c == 3  (iota == 2, unused)
+    	d = 1 << iota  // d == 8  (iota == 3)
+    )
+
+    const (
+    	u         = iota * 42  // u == 0     (untyped integer constant)
+    	v float64 = iota * 42  // v == 42.0  (float64 constant)
+    	w         = iota * 42  // w == 84    (untyped integer constant)
+    )
+
+    const x = iota  // x == 0
+    const y = iota  // y == 0
+    ```
 - type declaration(타입 선언)은 타입에 identifier(타입 이름)을 바인딩하는 것을 말한다. alias declaration, type definition 두 가지 종류가 있다.
     - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 이 때 type parameter를 대상 타입으로 사용할 수 없다.
         ``` go
