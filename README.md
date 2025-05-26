@@ -33,7 +33,7 @@
 - `for i, v := range sli {}`와 같은 표현식을 사용해 slice에 대해 반복문을 사용할 수 있다. 변수 i는 인덱스, v는 해당 인덱스의 복사된 값을 갖는다. `_` 표현식을 사용해 할당을 하지 않을 수 있으며 v는 생략할 수도 있다.
 - `map[K]V` 타입은 맵이다. zero value은 nil이며 리터럴은 struct와 다르게 key를 생략할 수 없다. `m[key]` 표현식을 사용해 map에 저장된 요소에 접근할 수 있다. `elem = m[key]` 표현식은 변수 m에 key가 없을 경우 오류가 발생한다. 반면 `elem, ok = m[key]` 표현식은 변수 m이 key가 있으면 ok 변수에 true, 없다면 false 값을 갖는다. key가 없는 경우 elem 변수에 zero value가 할당된다.
 - `func delete(m map[Type]Type1, key Type)` 내장 함수를 사용해 맵 변수 m에서 key를 삭제할 수 있다.
-- golang은 class 개념이 없지만 타입에 method를 정의할 수 있다. method는 receiver라는 인자를 받는 함수다. 함수와 다른 점은 단순히 receiver라는 특별한 인자가 있다는 것이며 기능적으로는 함수와 동일하다. method는 type이 정의된 package 내에서만 선언할 수 있다. 그렇기 때문에 int와 같은 내장 타입에는 method를 사용자가 정의할 수 없다. 물론 `type` 키워드를 사용해 int를 다시 한번 정의한 후 method를 정의할 수 있다. 아래는 int 타입을 다시 정의하고 사용하는 예시다.
+- golang은 class 개념이 없지만 type에 method를 정의할 수 있다. method는 receiver라는 인자를 받는 함수다. 함수와 다른 점은 단순히 receiver라는 특별한 인자가 있다는 것이며 기능적으로는 함수와 동일하다. method는 type이 정의된 package 내에서만 선언할 수 있다. 그렇기 때문에 int와 같은 내장 타입에는 method를 사용자가 정의할 수 없다. 물론 `type` 키워드를 사용해 int를 다시 한번 정의한 후 method를 정의할 수 있다. 아래는 int 타입을 다시 정의하고 사용하는 예시다.
     ``` go
     type MyString string
 
@@ -51,10 +51,10 @@
 - interface는 struct와 유사하지만 필드의 집합이 아니라 method의 집합을 나타낸다. interface 타입은 method를 모두 구현한 타입을 값으로 가질 수 있다. `type 이름 interface {method 목록}` 표현식을 사용해 선언할 수 있다.
 - interface를 구현한다는 것은 어떤 키워드를 통해 명시적으로 수행하는 것은 아니며 단순히 interface 타입에 포함된 모든 method를 선언해 암묵적으로 구현한다. interface의 선언식과 구현이 동일 package일 필요는 없다. interface는 `(value, type)` 값을 갖는다고 생각할 수 있다.
 - interface의 zero value은 nil이며 method 호출 시 runtime error가 발생한다.
-- method를 명시하지 않은 interface를 empty interfac라고 한다. empty interface는 모든 타입, 모든 값을 가질 수 있다. empty interface는 따로 `type` 키워드를 통해 선언할 필요가 없으며 변수 선언 시 `var i interface{}`와 같이 사용할 수 있다. empty interface는 알려지지 않은 타입의 값을 다룰 때 사용된다.
+- method를 명시하지 않은 interface를 empty interfac라고 한다. empty interface는 모든 value, 모든 type을 가질 수 있다. empty interface는 따로 `type` 키워드를 통해 선언할 필요가 없으며 변수 선언 시 `var i interface{}`와 같이 사용할 수 있다. empty interface는 알려지지 않은 타입의 값을 다룰 때 사용된다.
 - type assertion은 interface가 nil이 아니며 타입 T임을 확인하는 것을 말한다. `i.(T)` 표현식은 interface i가 T 타입임을 나타내며 i가 가리키는 T 타입의 변수를 반환한다. 만약 nil이나 T 타입이 아닐 경우 오류가 발생한다. `t, ok := i.(T)` 표현식은 두 번째 반환 값을 통해 타입 T가 맞는지에 따른 boolean 값을 반환한다.
 - type switch문은 switch의 테스트 표현식에 `i.(type)`을 사용해 interface 변수 i에 대한 내장 타입에 대한 case문을 작성할 수 있다.
-- 가장 흔한 interface는 fmt package에 있는 Striner interface다. fmt package는 값을 출력하기 위해 Stringer interface의 String method를 호출한다.
+- 가장 흔한 interface는 fmt package에 있는 Stringer interface다. fmt package는 값을 출력하기 위해 Stringer interface의 String method를 호출한다.
     ``` go
     type Stringer interface {
         String() string
