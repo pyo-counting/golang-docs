@@ -24,12 +24,12 @@
 - `type` 키워드를 여러번 사용하는 대신 `type (...)`와 같이 사용할 수 있다.
 - struct 리터럴은 순서대로 값을 나열하거나 `Name:`처럼 필드의 이름과 값을 순서 상관없이 나열해 표현할 수 있다.
 - `[n]T` 타입은 배열이다. 배열의 크기는 배열 타입의 일부이기 때문에 크기를 조정할 수 없다.
-- `[]T` 타입은 슬라이스로 동적으로 크기 조절이 가능하며 배열보다 더 일반적으로 사용한다. 슬라이스는 내부적으로 배열을 가리키는 포인터, 길이, 용량 정보를 저장하며 zero value은 `nil`이다. 배열 또는 슬라이스 변수 a에 대해 `a[low:high]`의 표현식을 사용해 슬라이싱해 슬라이스 값을 얻을 수 있다.
-- 슬라이스의 길이는 슬라이스를 통해 접근할 수 있는 요소의 길이를 나타내며 용량은 실제 슬라이스가 참조가 있는 배열 길이를 나타낸다(슬라이스가 가리키는 첫 인덱스부터 배열의 마지막 인덱스까지).
-- `func cap(v Type) int` 내장 함수는 배열, 슬라이스, 배열을 가리키는 포인터, buffered channel의 크기를 반환한다.
-- `func len(v Type) int` 내장 함수는 배열, 슬라이스, 배열을 가리키는 포인터, map, 문자열, buffered channel(아직 읽지 않은 메시지)의 길이를 반환한다.
-- `func make(t Type, size ...IntegerType) Type` 내장 함수는 slice, map, channel 타입을 생성하는 데 사용할 수 있다. slcie일 경우 두 번째, 세 번째 인자는 각각 length, capacity를 나타낸다. map의 경우 첫 번째 인자만 필요하다. slice의 경우 두 번째 인자는 buffered channel을 생성할 때 사용된다.
-- `func append(slice []Type, elems ...Type) []Type` 내장 함수를 사용해 슬라이스 마지막 인덱스 뒤에 값을 계속 추가할 수 있다. 기존 배열의 크기가 작으면 크기가 더 큰 배열을 생성 및 할당한다.
+- `[]T` 타입은 slice로 동적으로 크기 조절이 가능하며 배열보다 더 일반적으로 사용한다. slice는 내부적으로 배열을 가리키는 포인터, 길이, 용량 정보를 저장하며 zero value은 `nil`이다. 배열 또는 slice 변수 a에 대해 `a[low:high]`의 표현식을 사용해 슬라이싱해 slice 값을 얻을 수 있다.
+- slice의 길이는 slice를 통해 접근할 수 있는 요소의 길이를 나타내며 용량은 실제 slice가 참조가 있는 배열 길이를 나타낸다(slice가 가리키는 첫 인덱스부터 배열의 마지막 인덱스까지).
+- `func cap(v Type) int` 내장 함수는 배열, slice, 배열을 가리키는 포인터, buffered channel의 크기를 반환한다.
+- `func len(v Type) int` 내장 함수는 배열, slice, 배열을 가리키는 포인터, map, 문자열, buffered channel(아직 읽지 않은 메시지)의 길이를 반환한다.
+- `func make(t Type, size ...IntegerType) Type` 내장 함수는 slice, map, channel 타입을 생성하는 데 사용할 수 있다. slice일 경우 두 번째, 세 번째 인자는 각각 length, capacity를 나타낸다. map의 경우 첫 번째 인자만 필요하다. slice의 경우 두 번째 인자는 buffered channel을 생성할 때 사용된다.
+- `func append(slice []Type, elems ...Type) []Type` 내장 함수를 사용해 slice 마지막 인덱스 뒤에 값을 계속 추가할 수 있다. 기존 배열의 크기가 작으면 크기가 더 큰 배열을 생성 및 할당한다.
 - `for i, v := range sli {}`와 같은 표현식을 사용해 slice에 대해 반복문을 사용할 수 있다. 변수 i는 인덱스, v는 해당 인덱스의 복사된 값을 갖는다. `_` 표현식을 사용해 할당을 하지 않을 수 있으며 v는 생략할 수도 있다.
 - `map[K]V` 타입은 맵이다. zero value은 nil이며 리터럴은 struct와 다르게 key를 생략할 수 없다. `m[key]` 표현식을 사용해 map에 저장된 요소에 접근할 수 있다. `elem = m[key]` 표현식은 변수 m에 key가 없을 경우 오류가 발생한다. 반면 `elem, ok = m[key]` 표현식은 변수 m이 key가 있으면 ok 변수에 true, 없다면 false 값을 갖는다. key가 없는 경우 elem 변수에 zero value가 할당된다.
 - `func delete(m map[Type]Type1, key Type)` 내장 함수를 사용해 맵 변수 m에서 key를 삭제할 수 있다.
@@ -83,7 +83,7 @@
 ### [GO 프로그래밍 입문](https://codingnuri.com/golang-book/)
 - 문자열은 "(double quote), `(backtick)을 사용해 표현할 수 있다. double quote로 표현하는 문자열은 줄바꿈을 포함할 수 없으며 이스케이프 문자열 사용할 수 있다. backtick으로 표현하는 문자열은 줄바꿈을 포함할 수 있으며 이스케이프 문자열을 지원하지 않는다.
 - 문자열은 byte slice(`[]byte`) 표현되기 때문에 `"hello world"[4]`와 같이 인덱스를 통해 접근 가능하다. 문자열에 `len(s)` 함수를 사용해 길이를 확인할 수 있다.
-- 함수 정의 시 가변 인자를 사용할 수 있다. 이 때 해당 가변 인자는 함수 내에서 슬라이스로 접근할 수 있다. 함수 호출 시에는 가변 인자에 개별 인자, 배열, 슬라이스를 사용할 수 있다. 슬라이스를 매개변수로 사용 시 `fmt.Println(sli...)`와 같이 호출해야 한다.
+- 함수 정의 시 가변 인자를 사용할 수 있다. 이 때 해당 가변 인자는 함수 내에서 slice로 접근할 수 있다. 함수 호출 시에는 가변 인자에 개별 인자, 배열, slice를 사용할 수 있다. slice를 매개변수로 사용 시 `fmt.Println(sli...)`와 같이 호출해야 한다.
     ``` go
     // fmt.Println() 함수 예시
     func Println(a ...interface{}) (n int, err error){...}
