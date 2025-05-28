@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
@@ -75,22 +76,5 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 }
 
 func main() {
-	// lambda.Start(handleRequest)
-	type person struct {
-		name string
-		age  int
-	}
-	type person2 struct {
-		person
-		birth string
-	}
-
-	v1 := person2{
-		person{"pyoseyeol", 32},
-		"1991-01-01",
-	}
-	fmt.Println(v1.name)
-	fmt.Println(v1.birth)
-	fmt.Println(v1.age)
-	fmt.Println(v1.person.name)
+	lambda.Start(handleRequest)
 }

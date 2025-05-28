@@ -122,16 +122,16 @@
     fmt.Println(s1.Class, s1.No, s1.ClassInfo.No) // 1 10 1
     ```
 - 하나 이상의 작업을 동시에 진행하는 것을 동시성(concurrency)라 한다. golang에서는 goroutine, channel을 통해 동시성을 지원한다.
-- `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 실행되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
+- `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 종료되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
 - `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 채널의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하고 메시지를 송수신하는 예시다.
     ``` go
     package main
-    
+
     import (
         "fmt"
         "time"
     )
-    
+
     func pinger(c chan string) {
         for i := 0; ; i++ {
             c <- "ping" // 송신
@@ -146,10 +146,10 @@
     }
     func main() {
         var c chan string = make(chan string) // 송수신 channel 생성
-    
+
         go pinger(c)
         go printer(c)
-    
+
         var input string
         fmt.Scanln(&input)
     }
@@ -193,7 +193,20 @@
 - Strings and Runes
     - 문자열은 읽기 전용 byte slice(`[]byte`) 타입이다. go 언어의 문자열은 기본적을 UTF-8 인코딩을 사용한다. 다른 언어에서는 문자열은 character로 구성되지만 go 언어에서는 rune(int32 타입의 alias)이라는 타입을 사용한다.
     - rune literal은 single quote로 표현 가능하다. 예를 들어 'a', '1' '한'
-
+- Structs
+    - 일회성의 struct 타입을 정의 및 사용하기 위해 anonymous struct를 사용할 수 있다.
+        ``` go
+        newCar := struct {
+            make    string
+            model   string
+            mileage int
+        }{
+            make:    "Ford",
+            model:   "Taurus",
+            mileage: 200000,
+        }
+        ```
+- 
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
@@ -369,6 +382,30 @@
     const x = iota  // x == 0
     const y = iota  // y == 0
     ```
+    - const 키워드 뒤에 괄호 ()를 사용해 여러 상수를 한 번에 선언할 때, 첫 번째 상수를 제외하고는 값을 할당하는 부분을 생략할 수 있다. 값을 생략하면 바로 위에서 사용된 값과 타입을 그대로 따라간다. 만약 이전 상수가 a, b = 1, 2 와 같이 두 개의 값을 가졌다면, 다음 줄에서 값을 생략하고 c, d 와 같이 두 개의 식별자를 사용해야 한다. c 만 사용하면 에러가 발생한다.
+        ``` go
+        const (
+            a = iota // a == 0
+            b        // b == 1 (iota가 증가하고, 이전 표현식 iota가 반복됨)
+            c        // c == 2 (iota가 증가하고, 이전 표현식 iota가 반복됨)
+        )
+
+        const (
+            x = 10
+            y      // y == 10 (이전 표현식 10이 반복됨)
+            z      // z == 10 (이전 표현식 10이 반복됨)
+        )
+
+        const (
+            p, q = iota, iota + 10 // p == 0, q == 10
+            r, s                   // r == 1, s == 11 (iota가 증가하고, 이전 표현식 목록이 반복됨)
+        )
+
+        const (
+        	size int64 = 1024
+        	eof        = -1  // untyped integer constant
+        )
+        ```
 - type declaration(타입 선언)은 타입에 identifier(타입 이름)을 바인딩하는 것을 말한다. alias declaration, type definition 두 가지 종류가 있다.
     - alias declaration은 타입에 identifier(별칭)을 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic alias라고 부른다. 이 때 type parameter를 대상 타입으로 사용할 수 없다.
         ``` go
