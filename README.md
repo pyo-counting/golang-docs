@@ -90,10 +90,9 @@
     ```
 - `func panic(v any)` 내장 함수는 현재 함수를 즉시 멈추고 현재 함수에 defer 함수들을 모두 실행한 후 즉시 리턴한다(런타임 오류). 이러한 panic 모드 실행 방식은 다시 상위 함수에도 똑같이 적용되고, 계속 콜스택을 타고 올라가며 적용된다. 그리고 마지막에는 프로그램이 에러를 내고 종료하게 된다. `func recover() any` 내장 함수는 panic() 함수에 의한 패닉 상태를 중단하고 panic() 함수 호출 시 전달했던 인자를 반환한다. panic() 함수 호출 시 런타임 에러가 발생해 즉시 호출 중이던 함수가 종료되기 때문에 recover() 함수를 defer문과 사용해야 한다.
 - `func new(Type) *Type` 내장 함수를 사용해 매개변수 타입에 대해 메모리를 할당(zero value를 할당)하고 포인터를 반환한다.
-- struct에 명시적인 필드 이름 없이 타입만 명시해 embedded field를 사용할 수 있다. embedded field는 필드 이름 대신 타입을 사용해 접근할 수 있다.
-- struct의 필드로 struct를 사용할 수 있다. embedded type은 필드로 struct를 사용할 때 필드의 이름을 지정하지 않으면 된다. embedded type은 해당 struct를 통해 직접 접근 가능하다. 구조체 생성 시 필드 명은 해당 필드 타입을 그대로 사용하면 된다.
+- struct에 명시적인 필드 이름 없이 타입만 명시해 embedded field를 사용할 수 있다. embedded field는 타입을 사용해 접근할 수 있다. 만약 struct x의 embedded filed y가 필드 또는 method z를 갖고 있을 때, x.y.z로 접근할 수 있다. 뿐만 아니라 x의 필드인 것처럼 x.z와 같이 접근할 수 있다. 이를 promote 됐다고 말한다.
     ``` go
-    // example 2
+    // example 1
     // A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
     type test struct {
     	T1        // field name is T1
@@ -120,7 +119,7 @@
       No:        10,
     }
 
-    fmt.Println(s1.No, s1.ClassInfo.No) // 10 1
+    fmt.Println(s1.Class, s1.No, s1.ClassInfo.No) // 1 10 1
     ```
 - 하나 이상의 작업을 동시에 진행하는 것을 동시성(concurrency)라 한다. golang에서는 goroutine, channel을 통해 동시성을 지원한다.
 - `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 실행되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
@@ -207,7 +206,7 @@
     continue     for          import       return       var
     ```
 - byte는 uint8 타입, rune은 int32의 alias declaration이다.
-- struct 타입은 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다.
+- struct 타입은 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다. 문자열 literal을 사용해 속성을 나타낼 수 있다.
     ``` go
     type test1 struct {
     	x, y float64 ""  // an empty tag string is like an absent tag

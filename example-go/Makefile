@@ -1,9 +1,10 @@
-all: f1.o f2.o
+.DEFAULT_GOAL:=help
 
-f1.o f2.o:
-	echo $@
-# Equivalent to:
-# f1.o:
-#	 echo f1.o
-# f2.o:
-#	 echo f2.o
+.PHONY: help clean build
+
+help:  ## Display this help and any documented user-facing targets. Other undocumented targets may be present in the Makefile.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-10s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+
+clean:  ## Clean
+
+build:  ## Build
