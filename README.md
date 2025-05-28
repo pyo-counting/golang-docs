@@ -235,7 +235,7 @@
     	serverIP6 uint64 `protobuf:"2"`
     }
     ```
-- interface 타입은 type set(타입 집합)을 정의한다. interface 타입의 변수는 interface의 type set(interface를 구현한 non-interface 타입)의 값을 저장할 수 있다. interface 타입은 method, 타입을 가질 수 있다.
+- interface 타입은 type set(타입 집합)을 정의한다. interface 타입의 변수는 interface type set(interface를 구현한 non-interface 타입)의 값을 저장할 수 있다. interface 타입은 method, 타입을 가질 수 있다.
     - method 목록만 포함하는 경우 basic interface라고 부른다. basic interface의 type set은 모든 method를 구현헤야 한다.
         ``` go
         // A simple File interface.
@@ -247,13 +247,35 @@
         ```
         - method 이름은 유일해야 하며 blank(`_`) 이면 안된다.
         - 하나의 타입이 여러 interface를 구현할 수도 있다.
-        - empty interface는 모든 non-interface가 구현한다. 편의를 위해 universe block에는 empty interface의 alias declaration인 any 타입을 선언한다.
+        - empty interface는 모든 non-interface 타입이 구현한다. 편의를 위해 universe block에는 empty interface의 alias declaration인 any 타입을 선언한다.
             ``` go
             // any is an alias for interface{} and is equivalent to interface{} in all ways.
             type any = interface{}
             ```
     - interface는 다른 interface를 포함하는 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다. interface의 type set에는 interface가 포함되지 않음을 유의해야 한다. 즉 interface는 type set을 정의하는 개념으로 사용되기 때문에 interface 자체가 type set의 목록에 포함되지 않는다. embedded interface의 경우 type set은 관련 interface에 속한 모든 method를 구현한 non-interface 타입이다.
-    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다.
+        ``` go
+        type Reader interface {
+        	Read(p []byte) (n int, err error)
+        	Close() error
+        }
+
+        type Writer interface {
+        	Write(p []byte) (n int, err error)
+        	Close() error
+        }
+
+        // ReadWriter's methods are Read, Write, and Close.
+        type ReadWriter interface {
+        	Reader  // includes methods of Reader in ReadWriter's method set
+        	Writer  // includes methods of Writer in ReadWriter's method set
+        }
+
+        type ReadCloser interface {
+        	Reader   // includes methods of Reader in ReadCloser's method set
+        	Close()  // illegal: signatures of Reader.Close and Close are different
+        }
+        ```
+    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. general interface를 통해 단순히 메서드 집합만을 정의하는 것을 넘어 특정 타입들을 명시적으로 포함하거나 제외하는 방식으로 type set을 정의할 수 있다.
         ``` go
         // An interface representing only the type int.
         interface {
@@ -278,8 +300,8 @@
         }
         ```
         - 타입은 `T`, `~T`(underlying type이 T인 모든 타입), `T1|T2|T3`(union 연산자는 or) 형태로 명시할 수 있다.
-            - T에는 type parameter(~T도 불가)를 사용할 수 없다.
-            - ~T에는 underying type을 사용할 수 있다. 그리고 interface를 사용할 수 없다.
+            - `T`에는 interface를 사용할 수 있다.
+            - `~T`에는 underying type만 사용할 수 있으며, interface를 사용할 수 없다.
                 ``` go
                 type MyInt int
 
@@ -289,7 +311,7 @@
                 	~error   // illegal: error is an interface
                 }
                 ```
-            - T1|T2|T3처럼 여러 타입을 명시하는 경우 서로 교집합이 없어야 한다. 이 때 추가적인 제약 사항이 있다. predeclared identifier인 comparable을 포함할 수 없다. method를 갖는 interface를 포함할 수 없다. comparable을 embede할 수 없다. method을 포함한 interface를 embed할 수 없다.
+            - `T1|T2|T3`는 type set의 전체 집합을 나타낸다.
                 ``` go
                 // The Float interface represents all floating-point types
                 // (including any named types whose underlying types are
@@ -298,7 +320,17 @@
                 	~float32 | ~float64
                 }
                 ```
-             - general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
+            - `T`, `~T`에는 type parameter를 사용할 수 없다. non-interface 타입들은 서로 교집합이 없어야 하지만 interface 타입은 다른 타입들과 교집합이 있어도 무방하다.
+                ``` go
+                interface {
+                	P                // illegal: P is a type parameter
+                	int | ~P         // illegal: P is a type parameter
+                	~int | MyInt     // illegal: the type sets for ~int and MyInt are not disjoint (~int includes MyInt)
+                	float32 | Float  // overlapping type sets but Float is an interface
+                }
+                ```
+            - `T1|T2|T3`에는 추가 제약 사항이 있다. predeclared identifier인 comparable을 포함할 수 없다. method를 갖는 interface를 포함할 수 없다. comparable을 embed할 수 없다. method을 포함한 interface를 embed할 수 없다.
+             - basic interface가 아닌 general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
                 ``` go
                 var x Float                     // illegal: Float is not a basic interface
 
@@ -332,8 +364,8 @@
                 }
                 ```
     - 타입 T가 interfaece I를 구현(implement)하는 조건은 다음과 같다.
-	    - T가 interface가 아닌 경우, T가 I의 type set에 속한다.
-	    - T가 interface인 경우, T의 type set이 I의 type set의 부분 집합이다.
+	    - T가 interface가 아니면서 I의 type set에 속한다.
+	    - T가 interface이면서 T의 type set이 I의 type set의 부분 집합이다.
 - map의 key 타입은 비교 가능한 타입( `==`, `!=`)이어야 한다. 만약 key 타입이 interface라면 dynamic type에 대해 비교 연산이 가능해야 한다.
 - universe block은 모든 golang 소스 코드를 포함한다. 아래 identifier는 universe block에 선언된 predeclared identifier다. [builtin](https://pkg.go.dev/builtin) package documentation을 통해 확인할 수 있다. builtin package는 단순히 golang documentation을 위해 작성된 코드이다.
     ```
