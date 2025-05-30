@@ -47,6 +47,7 @@ func uploadReceiptToS3(ctx context.Context, bucketName, key, receiptContent stri
 }
 
 func handleRequest(ctx context.Context, event json.RawMessage) error {
+	log.Println("Input event: ", string(event))
 	// Parse the input event
 	var order Order
 	if err := json.Unmarshal(event, &order); err != nil {
