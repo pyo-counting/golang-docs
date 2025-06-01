@@ -66,11 +66,11 @@
         Error() string
     }
     ```
-- golang은 제네릭 함수, 제네릭 타입을 통해 제네릭스를 제공한다.
+- golang은 generic 함수, generic 타입을 통해 generic스를 제공한다.
     ``` go
     func Index[T comparable](s []T, x T) int {}
     ```
-    뿐만 아니라 `type` 키워드에 type parameter를 추가함으로써 제네릭 타입을 정의할 수 있다. 아래는 예시다.
+    뿐만 아니라 `type` 키워드에 type parameter를 추가함으로써 generic 타입을 정의할 수 있다. 아래는 예시다.
     ``` go
     type List[T any] struct {
 	    next *List[T]
@@ -89,8 +89,8 @@
     func Println(a ...interface{}) (n int, err error){...}
     ```
 - `func panic(v any)` 내장 함수는 현재 함수를 즉시 멈추고 현재 함수에 defer 함수들을 모두 실행한 후 즉시 리턴한다(런타임 오류). 이러한 panic 모드 실행 방식은 다시 상위 함수에도 똑같이 적용되고, 계속 콜스택을 타고 올라가며 적용된다. 그리고 마지막에는 프로그램이 에러를 내고 종료하게 된다. `func recover() any` 내장 함수는 panic() 함수에 의한 패닉 상태를 중단하고 panic() 함수 호출 시 전달했던 인자를 반환한다. panic() 함수 호출 시 런타임 에러가 발생해 즉시 호출 중이던 함수가 종료되기 때문에 recover() 함수를 defer문과 사용해야 한다.
-- `func new(Type) *Type` 내장 함수를 사용해 매개변수 타입에 대해 메모리를 할당(zero value를 할당)하고 포인터를 반환한다.
-- struct에 명시적인 필드 이름 없이 타입만 명시해 embedded field를 사용할 수 있다. embedded field는 타입을 사용해 접근할 수 있다. 만약 struct x의 embedded filed y가 필드 또는 method z를 갖고 있을 때, x.y.z로 접근할 수 있다. 뿐만 아니라 x의 필드인 것처럼 x.z와 같이 접근할 수 있다. 이를 promote 됐다고 말한다.
+- `func new(Type) *Type` 내장 함수는 매개변수 타입에 대해 메모리를 할당(zero value를 할당)하고 포인터를 반환한다.
+- struct에 명시적인 필드 이름 없이 타입만 명시해 embedded field를 사용할 수 있다. embedded field는 타입을 사용해 접근할 수 있다. 만약 struct x의 embedded filed y가 필드 또는 method z를 갖고 있을 때, x.y.z로 접근할 수 있다. 뿐만 아니라 x의 필드인 것처럼 x.z와 같이 접근할 수 있다. 이를 promote 됐다고 말한다. 뿐만 아니라 embedded field의 method도 동일하게 자신의 것인처럼 접근할 수 있으며, 관련 interface를 구현한 것처럼 간주된다.
     ``` go
     // example 1
     // A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
@@ -161,7 +161,8 @@
     ```
 - `switch`문과 유사한 `select`문은 준비된(수신받을 메시지가 있거나 보낼 메시지가 있는 경우) channel의 case문을 실행한다. 하나 이상의 channel이 준비되면 어느 channel로부터 메시지를 받을지 무작위로 선택한다. 준비된 channel이 없으면 사용 가능해질 때까지 문장 실행이 차단된다. default case는 준비된 channel이 없을 경우 즉시 실행된다. 아래는 예시다. select 문을 계속 실행하기 위해 for {...}문 내에서 사용할 수 있다.
     ``` go
-    select {
+    for {
+        select {
         case msg1 := <- c1:
             fmt.Println("Message 1", msg1)
         case msg2 := <- c2:
@@ -170,6 +171,7 @@
             fmt.Println("timeout")
         default:
             fmt.Println("nothing ready")
+        }
     }
     ```
 - `make()` 함수를 사용해 channel을 생성할 때 두 번째 매개변수에 크기를 지정해 buffered channel을 생성할 수 있다. buffered channel은 메시지를 수신, 송신 시 channel이 꽉차있지 않은 이상 기다리지 않는다는 차이점이 있다.
@@ -206,7 +208,83 @@
             mileage: 200000,
         }
         ```
-- 
+- Enums
+    - enum은 미리 정의된 이름을 갖는 값들의 고정된 집합을 나타내는 특별한 데이터 타입이다. 일반적으로 상수로 원시적인 정수나 문자열을 사용하는 것보다 훨씬 읽기 쉽고 체계적인 방식으로 관련된 상태들을 정의할 때 사용된다. golang에서는 enum을 내장 기능으로 지원하지 않는 대신 const, iota, 사용자 type을 사용해 구현할 수 있다. 주의할 점은 iota가 항상 0 부터 시작하기 때문에 enum의 첫 값을 iota + 1으로 해서 1 부터 시작하도록 하던지 아니면 첫 enum을 Unknown이나 Nil을 나타내는데 사용해야 한다. golang의 zero value 때문에 예상치 못한 부작용이 생길 수 있기 때문이다.
+        ``` go
+        // 1. enum을 위한 커스텀 type 정의
+        type TrafficLightState int
+
+        // 2. const와 iota를 사용하여 상수 선언
+        const (
+        	Red    TrafficLightState = iota + 1  // Red는 1
+        	Yellow                               // Yellow는 2
+        	Green                                // Green은 3
+        )
+
+        // 3. 커스텀 문자열 표현을 위한 String 메서드
+        func (s TrafficLightState) String() string {
+        	switch s {
+        	case Red:
+        		return "빨간불"
+        	case Yellow:
+        		return "노란불"
+        	case Green:
+        		return "초록불"
+        	default:
+        		return fmt.Sprintf("알 수 없는 신호등 상태 (%d)", s)
+        	}
+        }
+        ```
+- Generics
+    - 아래는 slices standardy library의 Index 함수 예시다.
+        ``` go
+        func Index[S ~[]E, E comparable](s S, v E) int {...}
+        ```
+    - 아래는 단일 연결 리스트 예시다.
+        ``` go
+        type List[T any] struct {
+            head, tail *element[T]
+        }
+
+        type element[T any] struct {
+            next *element[T]
+            val  T
+        }
+
+        func (lst *List[T]) Push(v T) {
+            if lst.tail == nil {
+                lst.head = &element[T]{val: v}
+                lst.tail = lst.head
+            } else {
+                lst.tail.next = &element[T]{val: v}
+                lst.tail = lst.tail.next
+            }
+        }
+        ```
+- Range over Iterators
+    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다. 대신 강력한 동시성 기능과 함수형 프로그래밍 스타일을 활용해 interator와 유사한 동작을 구현할 수 있었따. 하지만 Go 1.23부터는 표준 라이브러리에 iter 패키지가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다.
+        ``` go
+        // Numbers 함수가 iter.Seq 타입의 함수를 반환합니다.
+        func Numbers(max int) iter.Seq[int] {
+            // 이 반환되는 익명 함수가 iter.Seq의 실제 구현체입니다.
+            // 이 함수는 'yield func(int) bool' 이라는 매개변수를 받습니다.
+            return func(yield func(int) bool) { // <-- 여기서 'yield'는 콜백 매개변수입니다.
+                for i := 0; i < max; i++ {
+                    // 개발자는 이 'yield' 콜백 매개변수를 호출하여 'i' 값을 '내보냅니다'.
+                    if !yield(i) { // yield가 false를 반환하면 소비자가 더 이상 값을 원하지 않으므로 중단합니다.
+                        return
+                    }
+                }
+            }
+        }
+
+        func main() {
+            for num := range Numbers(5) { // <--- 여기가 소비하는 쪽입니다.
+                fmt.Printf("%d", num) // 01234
+            }
+        }
+        ```
+        - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다.
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
@@ -252,7 +330,7 @@
             // any is an alias for interface{} and is equivalent to interface{} in all ways.
             type any = interface{}
             ```
-    - interface는 다른 interface를 포함하는 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다. interface의 type set에는 interface가 포함되지 않음을 유의해야 한다. 즉 interface는 type set을 정의하는 개념으로 사용되기 때문에 interface 자체가 type set의 목록에 포함되지 않는다. embedded interface의 경우 type set은 관련 interface에 속한 모든 method를 구현한 non-interface 타입이다.
+    - interface는 다른 interface를 포함하는 embedded interface를 지원한다. 이 때 이를 구현하기 위해서는 두 interface의 method를 모두 구현해야 한다. 그리고 두 interface에 중복된 이름의 method가 있을 경우 동일한 형태를 가져야 한다. interface의 type set에는 interface가 포함되지 않음을 유의해야 한다. 즉 interface는 type set을 정의하는 개념으로 사용되기 때문에 interface 자체가 type set의 목록에 포함되지 않는다. embedded interface의 경우에도 마찬가지로 type set은 관련 interface에 속한 모든 method를 구현한 non-interface 타입이다.
         ``` go
         type Reader interface {
         	Read(p []byte) (n int, err error)
@@ -275,7 +353,7 @@
         	Close()  // illegal: signatures of Reader.Close and Close are different
         }
         ```
-    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. general interface를 통해 단순히 메서드 집합만을 정의하는 것을 넘어 특정 타입들을 명시적으로 포함하거나 제외하는 방식으로 type set을 정의할 수 있다.
+    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. general interface를 통해 단순히 메서드 집합만을 정의하는 것을 넘어 특정 타입들을 명시적으로 포함하거나 제외하는 방식으로 type set을 정의할 수 있다. general interface를 통해 해당 interface를 구현할 수 있는 타입을 제한할 수 있다. 이는 generic 사용 시 중요하다.
         ``` go
         // An interface representing only the type int.
         interface {
@@ -385,11 +463,6 @@
     	append cap clear close complex copy delete imag len
     	make max min new panic print println real recover
     ```
-- 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
-    - type parameter가 아닌 interface 타입은 비교가 가능하다(type parameter는 strictle comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교 가능하지 않을 경우 runtime panic이 발생할 수 있다.
-    - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
-    - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
-- gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
 - constant declaration에서 predeclared identifier인 `iota`은 index를 나타낸다. `iota`는 주로 enum을 정의하는데 사용된다.
     ``` go
     const (
@@ -448,7 +521,7 @@
             A[P any]          = P           // illegal: P is a type parameter
         )
         ```
-    - type definition은 기존 타입과 동일한 기능을 제공하지만 독립적인 새로운 타입을 identifier(타입 이름)에 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic type이라고 부른다. generic type에 대한 method 정의시 receiver에도 동일한 type parameter를 명시해야 한다. 이 때 type parameter를 대상 타입으로 사용할 수 없다.
+    - type definition은 기존 타입과 동일한 기능을 제공하지만 독립적인 새로운 타입을 identifier(타입 이름)에 바인딩하는 것을 말한다. type parameter를 명시하는 경우 generic type이라고 부른다. generic type에 대한 method 정의시 receiver에도 동일한 type parameter를 명시해야 한다. 이 때 type parameter를 대상 타입으로 사용할 수 없다. 그리고 새로운 타입을 정의할 때 기존 타입은 컴파일 시점에 알려진 타입이어야 한다.
         ``` go
         type (
         	Point struct{ x, y float64 }  // Point and struct{ x, y float64 } are different types
@@ -472,7 +545,7 @@
         	type L T   // illegal: T is a type parameter declared by the enclosing function
         }
         ```
-- type parameter(타입 파라미터)는 제네릭 함수, 제네릭 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 제네릭 함수, 제네락 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
+- type parameter(타입 파라미터)는 generic 함수, generic 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 generic 함수, generic 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
     ``` go
     func PrintKeyValue[K ~string, V int](k K, v V) {
 	    fmt.Printf("key: %v, value: %v\n", k, v)
@@ -491,24 +564,29 @@
         type T[P interface{*C}] …
         type T[P *C,] …
         ```
-    - 제네릭 타입 T의 type parameter 목록에 type constraint T를 직접적으로 또는 간접적으로 참조할 수 없다. 이는 순환 참조, 타입의 정의가 완전히 확정되지 않은 상태에서 자신을 의존하는 모순적인 상황을 만들 수 있기 때문에 금지된다.
-    ``` go
-    type T1[P T1[P]] …                    // illegal: T1 refers to itself
-    type T2[P interface{ T2[int] }] …     // illegal: T2 refers to itself
-    type T3[P interface{ m(T3[int])}] …   // illegal: T3 refers to itself
-    type T4[P T5[P]] …                    // illegal: T4 refers to T5 and
-    type T5[P T4[P]] …                    //          T5 refers to T4
+    - generic 타입 T의 type parameter 목록에 type constraint T를 직접적으로 또는 간접적으로 참조할 수 없다. 이는 순환 참조, 타입의 정의가 완전히 확정되지 않은 상태에서 자신을 의존하는 모순적인 상황을 만들 수 있기 때문에 금지된다.
+        ``` go
+        type T1[P T1[P]] …                    // illegal: T1 refers to itself
+        type T2[P interface{ T2[int] }] …     // illegal: T2 refers to itself
+        type T3[P interface{ m(T3[int])}] …   // illegal: T3 refers to itself
+        type T4[P T5[P]] …                    // illegal: T4 refers to T5 and
+        type T5[P T4[P]] …                    //          T5 refers to T4
 
-    type T6[P int] struct{ f *T6[P] }     // ok: reference to T6 is not in type parameter list
-    ```
+        type T6[P int] struct{ f *T6[P] }     // ok: reference to T6 is not in type parameter list
+        ```
 - type constraint는 interface로 type parameter의 type argument로 사용할 수 있는 타입과 연산를 제한한다. 표현식 `interface{E}`와 같이 표현하며 E가 method가 아닌 경우 단순하게 `E`로 표현할 수 있다.
     ``` go
     [T []P]                      // = [T interface{[]P}]
     [T ~int]                     // = [T interface{~int}]
     [T int|string]               // = [T interface{int|string}]
     ```
+    - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
     - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
     - interface는 비교 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현과 type constraint에 대한 충족은 다른 의미로 생각해야 함).
+- 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
+    - type parameter가 아닌 interface 타입은 비교가 가능하다(type parameter는 strictly comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교 가능하지 않을 경우 runtime panic이 발생할 수 있다.
+    - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
+    - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
 - `*`, `<-` 연산자로 시작하는 타입과 func keyword로 시작하지만 리턴 목록이 없는 타입은 모호성을 피하기 위해 필요한 경우 소괄호로 표현해야 한다.
     ``` go
     *Point(p)        // same as *(Point(p))
