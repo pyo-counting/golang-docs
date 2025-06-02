@@ -1,30 +1,80 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
-	"iter" // Go 1.23부터 표준 라이브러리에 포함
+	"log"
+	"os"
+	"strings"
+
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// Numbers 함수가 iter.Seq 타입의 함수를 반환합니다.
-func Numbers(max int) iter.Seq[int] {
-	// 이 반환되는 익명 함수가 iter.Seq의 실제 구현체입니다.
-	// 이 함수는 'yield func(int) bool' 이라는 매개변수를 받습니다.
-	return func(yield func(int) bool) { // <-- 여기서 'yield'는 콜백 매개변수입니다.
-		for i := 0; i < max; i++ {
-			fmt.Println("hello", i)
-			// 개발자는 이 'yield' 콜백 매개변수를 호출하여 'i' 값을 '내보냅니다'.
-			if !yield(i) { // yield가 false를 반환하면 소비자가 더 이상 값을 원하지 않으므로 중단합니다.
-				return
-			}
-		}
+type Order struct {
+	OrderID string  `json:"order_id"`
+	Amount  float64 `json:"amount"`
+	Item    string  `json:"item"`
+}
+
+var (
+	s3Client *s3.Client
+)
+
+func init() {
+	// Initialize the S3 client outside of the handler, during the init phase
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatalf("unable to load SDK config, %v", err)
 	}
+
+	s3Client = s3.NewFromConfig(cfg)
+}
+
+func uploadReceiptToS3(ctx context.Context, bucketName, key, receiptContent string) error {
+	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: &bucketName,
+		Key:    &key,
+		Body:   strings.NewReader(receiptContent),
+	})
+	if err != nil {
+		log.Printf("Failed to upload receipt to S3: %v", err)
+		return err
+	}
+	return nil
+}
+
+func handleRequest(ctx context.Context, event json.RawMessage) error {
+	// Parse the input event
+	var order Order
+	if err := json.Unmarshal(event, &order); err != nil {
+		log.Printf("Failed to unmarshal event: %v", err)
+		return err
+	}
+
+	// Access environment variables
+	bucketName := os.Getenv("RECEIPT_BUCKET")
+	if bucketName == "" {
+		log.Printf("RECEIPT_BUCKET environment variable is not set")
+		return fmt.Errorf("missing required environment variable RECEIPT_BUCKET")
+	}
+
+	// Create the receipt content and key destination
+	receiptContent := fmt.Sprintf("OrderID: %s\nAmount: $%.2f\nItem: %s",
+		order.OrderID, order.Amount, order.Item)
+	key := "receipts/" + order.OrderID + ".txt"
+
+	// Upload the receipt to S3 using the helper method
+	if err := uploadReceiptToS3(ctx, bucketName, key, receiptContent); err != nil {
+		return err
+	}
+
+	log.Printf("Successfully processed order %s and stored receipt in S3 bucket %s", order.OrderID, bucketName)
+	return nil
 }
 
 func main() {
-	for num := range Numbers(5) { // <--- 여기가 소비하는 쪽입니다.
-		fmt.Println("bye", num) // 1
-		if num == 3 {
-			break
-		}
-	}
+	lambda.Start(handleRequest)
 }

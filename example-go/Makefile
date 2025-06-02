@@ -1,4 +1,5 @@
 .DEFAULT_GOAL:=help
+.DELETE_ON_ERROR:
 
 .PHONY: help clean build
 
