@@ -324,7 +324,7 @@
     	serverIP6 uint64 `protobuf:"2"`
     }
     ```
-- interface 타입은 type set(타입 집합)을 정의한다. interface 타입의 변수는 interface type set(interface를 구현한 non-interface 타입)의 값을 저장할 수 있다. interface 타입은 method, 타입을 가질 수 있다.
+- interface 타입은 type set(타입 집합)을 정의한다. interface 타입의 변수는 interface type set(interface를 구현한 non-interface 타입)의 값을 저장할 수 있으며 type assertion을 통해 interface 변수가 갖고 있는 타입을 확인할 수 있다. interface는 method, 타입 목록을 가질 수 있다.
     - method 목록만 포함하는 경우 basic interface라고 부른다. basic interface의 type set은 모든 method를 구현헤야 한다.
         ``` go
         // A simple File interface.
@@ -364,7 +364,7 @@
         	Close()  // illegal: signatures of Reader.Close and Close are different
         }
         ```
-    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. general interface를 통해 단순히 메서드 집합만을 정의하는 것을 넘어 특정 타입들을 명시적으로 포함하거나 제외하는 방식으로 type set을 정의할 수 있다. general interface를 통해 해당 interface를 구현할 수 있는 타입을 제한할 수 있다. 이는 generic 사용 시 중요하다.
+    - method 목록과 추가적으로 타입을 갖는 경우 general interface라고 부른다. general interface를 통해 단순히 메서드 집합만을 정의하는 것을 넘어 특정 타입들을 명시적으로 포함하거나 제외하는 방식으로 type set을 정의할 수 있다. general interface를 통해 해당 interface를 구현할 수 있는 타입을 제한할 수 있다.
         ``` go
         // An interface representing only the type int.
         interface {
@@ -400,15 +400,6 @@
                 	~error   // illegal: error is an interface
                 }
                 ```
-            - `T1|T2|T3`는 type set의 전체 집합을 나타낸다.
-                ``` go
-                // The Float interface represents all floating-point types
-                // (including any named types whose underlying types are
-                // either float32 or float64).
-                type Float interface {
-                	~float32 | ~float64
-                }
-                ```
             - `T`, `~T`에는 type parameter를 사용할 수 없다. non-interface 타입들은 서로 교집합이 없어야 하지만 interface 타입은 다른 타입들과 교집합이 있어도 무방하다.
                 ``` go
                 interface {
@@ -418,40 +409,75 @@
                 	float32 | Float  // overlapping type sets but Float is an interface
                 }
                 ```
-            - `T1|T2|T3`에는 추가 제약 사항이 있다. predeclared identifier인 comparable을 포함할 수 없다. method를 갖는 interface를 포함할 수 없다. comparable을 embed할 수 없다. method을 포함한 interface를 embed할 수 없다.
-             - basic interface가 아닌 general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하며 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다.
+            - `T1|T2|T3`는 type set의 전체 집합을 나타낸다.
                 ``` go
-                var x Float                     // illegal: Float is not a basic interface
-
-                var x interface{} = Float(nil)  // illegal
-
-                type Floatish struct {
-                	f Float                 // illegal
-                }
-
-                // illegal: Bad may not embed itself
-                type Bad interface {
-                	Bad
-                }
-
-                // illegal: Bad1 may not embed itself using Bad2
-                type Bad1 interface {
-                	Bad2
-                }
-                type Bad2 interface {
-                	Bad1
-                }
-
-                // illegal: Bad3 may not embed a union containing Bad3
-                type Bad3 interface {
-                	~int | ~string | Bad3
-                }
-
-                // illegal: Bad4 may not embed an array containing Bad4 as element type
-                type Bad4 interface {
-                	[10]Bad4
+                // The Float interface represents all floating-point types
+                // (including any named types whose underlying types are
+                // either float32 or float64).
+                type Float interface {
+                	~float32 | ~float64
                 }
                 ```
+                - `T1|T2|T3`에는 추가 제약 사항이 있다.
+                    - predeclared identifier인 comparable을 포함할 수 없다.
+                    - method를 갖는 interface를 포함할 수 없다. comparable을 embed할 수 없다.
+                    - method을 포함한 interface를 embed할 수 없다.
+        - general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하다. 반면 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다. general interface의 유일한 목적은 generic의 type argument를 제약하는 것이다. general interface는 변수를 선언하거나, struct 필드, 컬렉션의 요소로 사용할 수 없다다. 왜냐하면 이들은 단일하고 구체적인 타입을 나타내는 것이 아니라, 타입들의 집합을 나타내기 때문이다.
+            ``` go
+            // general interface는 non-interface 타입의 구성 요소로 사용할 수 없다.
+            type DataHolder struct {
+                Value Number // 컴파일 오류!
+            }
+            ```
+            ``` go
+            // general interface는 다른 interface의 타입 구성 요소로 사용할 수 있다.
+            type BasicComparable interface {
+                ~int | ~string // 하나의 제약
+                // 메서드 없음
+            }
+
+            type MyCombinedConstraint interface {
+                BasicComparable // 제약을 임베딩
+                fmt.Stringer    // 기본 인터페이스(메서드) 임베딩
+                // 다른 메서드나 제약
+            }
+
+            func Process[T MyCombinedConstraint](val T) {
+                // ...
+            }
+            ```
+            ``` go
+            var x Float                     // illegal: Float is not a basic interface
+
+            var x interface{} = Float(nil)  // illegal
+
+            type Floatish struct {
+                f Float                 // illegal
+            }
+
+            // illegal: Bad may not embed itself
+            type Bad interface {
+                Bad
+            }
+
+                // illegal: Bad1 may not embed itself using Bad2
+            type Bad1 interface {
+                Bad2
+            }
+            type Bad2 interface {
+                Bad1
+            }
+
+            // illegal: Bad3 may not embed a union containing Bad3
+            type Bad3 interface {
+                ~int | ~string | Bad3
+            }
+
+            // illegal: Bad4 may not embed an array containing Bad4 as element type
+            type Bad4 interface {
+                [10]Bad4
+            }
+            ```
     - 타입 T가 interfaece I를 구현(implement)하는 조건은 다음과 같다.
 	    - T가 interface가 아니면서 I의 type set에 속한다.
 	    - T가 interface이면서 T의 type set이 I의 type set의 부분 집합이다.
@@ -591,7 +617,7 @@
     [T ~int]                     // = [T interface{~int}]
     [T int|string]               // = [T interface{int|string}]
     ```
-    - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
+    - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 general interface이기 때문에 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
     - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
     - interface는 비교 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현과 type constraint에 대한 충족은 다른 의미로 생각해야 함).
 - 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
