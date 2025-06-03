@@ -196,7 +196,7 @@
     - 문자열은 읽기 전용 byte slice(`[]byte`) 타입이다. go 언어의 문자열은 기본적을 UTF-8 인코딩을 사용한다. 다른 언어에서는 문자열은 character로 구성되지만 go 언어에서는 rune(int32 타입의 alias)이라는 타입을 사용한다.
     - rune literal은 single quote로 표현 가능하다. 예를 들어 'a', '1' '한'
 - Structs
-    - 일회성의 struct 타입을 정의 및 사용하기 위해 anonymous struct를 사용할 수 있다.
+    - 일회성의 struct 타입을 정의 및 사용하기 위해 anonymous struct를 사용할 수 있다. 이러한 기법을 table-driven style이라고 부르며 주로 테스트 코드에서 사용한다.
         ``` go
         newCar := struct {
             make    string
@@ -285,6 +285,17 @@
         }
         ```
         - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다.
+- Testing and Benchmarking
+    - go의 standard library에 포함된 testing package는 go package를 위한 자동화된 테스트 코드를 작성할 수 있도록 도와준다. 이 package는 주로 `go test` 명령어와 함께 사용된다. `go test` 명령어가 테스트로 인식하려면, 함수는 다음과 같은 signature를 따라야 한다.
+        ``` go
+        func TestXxx(*testing.T)
+        ```
+        - Xxx 부분은 소문자로 시작해선 안 된다. 보통 TestAddition, TestGetUserByID처럼 테스트의 목적을 설명하는 이름으로 짓는다.
+        - 함수는 `*testing.T` 타입의 단일 인자를 받는다. 이 `*testing.T` 타입은 테스트 실패를 알리거나, 정보를 로깅하거나, 테스트 흐름을 제어하는 데 사용되는 메서드를 제공한다.
+        - `*testing.T` 타입에는 테스트의 실패를 알리기 위한 `Error(args ...any)`, `Errorf(format string, args ...any)`, `Fail()`, `FailNow()` 메서드를 지원한다.
+    - TestXxx 함수들을 포함하는 파일의 이름은 반드시 `_test.go`로 끝나야 한다 (예: my_package_test.go). 이 파일들은 `go build`(일반적인 package 빌드) 명령어 사용 시 제외된다.
+        - 테스트 파일이 테스트 대상 package와 동일 package에 속하는 경우 white box 테스트라고 부른다. 동일 package이기 때문에 테스트 대상 package의 unexported name에도 접근이 가능해 내부 구현 상세를 테스트할 수 있다.
+        - 테스트 파일이 `_test` 접미사가 붙은 별도의 package에 속하는 경우 black box 테스트라고 부른다. 테스트 대상 package가 abs라면, 테스트 파일은 `package abs_test` package에 포함된다. 동일 package가 아니기 때문에 테스트 대상 package의 exported name에만 접근이 가능하다.
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
