@@ -285,6 +285,8 @@
         }
         ```
         - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다.
+- Errors
+    - golang은 에러를 별도의 함수 반환 값을 통해 명시적으로 전달한다. 일반적으로 마지막 반환 값으로 사용한다.
 - Testing and Benchmarking
     - go의 standard library에 포함된 testing package는 go package를 위한 자동화된 테스트 코드를 작성할 수 있도록 도와준다. 이 package는 주로 `go test` 명령어와 함께 사용된다. `go test` 명령어가 테스트로 인식하려면, 함수는 다음과 같은 signature를 따라야 한다.
         ``` go
@@ -617,11 +619,33 @@
     [T ~int]                     // = [T interface{~int}]
     [T int|string]               // = [T interface{int|string}]
     ```
-    - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다. comparable은 general interface이기 때문에 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
-    - type argument T가 type constraint C를 만족한다는 의미는 T가 C의 type set에 매칭된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
-    - interface는 비교 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현과 type constraint에 대한 충족은 다른 의미로 생각해야 함).
+    - type parameter가 아닌 interface 변수는 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable interface를 구현하지는 않는다. 하지만 type parameter로서 interface는 comparable interface를 충족할 수 있다(interface의 구현(implementation)과 type constraint에 대한 충족(satisfaction)은 다른 의미로 생각해야 함).
+        ``` go
+        int                          // implements comparable (int is strictly comparable)
+        []byte                       // does not implement comparable (slices cannot be compared)
+        interface{}                  // does not implement comparable (see above)
+        interface{ ~int | ~string }  // type parameter only: implements comparable (int, string types are strictly comparable)
+        interface{ comparable }      // type parameter only: implements comparable (comparable implements itself)
+        interface{ ~int | ~[]byte }  // type parameter only: does not implement comparable (slices are not comparable)
+        interface{ ~struct{ any } }  // type parameter only: does not implement comparable (field any is not strictly comparable)
+        ```
+    - gerneral interface인 comparable은 strictly comparable non-inferface 타입들이 구현한다. 즉, 이 interface를 구현한 타입은 비교 연산자 `==`, `!=`를 사용할 수 있는 타입으로 `bool`, 숫자(`int`, `uint`, `float32`, `complex64` 등), string, pointer, channel, 일부 struct(필드가 모두 comparable 타입인 경우), 일부 배열(comparable 타입 배열인 경우)이 있다. inteface 타입은 비교가 가능하지만 strictly comparable하지 않기 때문에 comparable을 구현하지 않는다.
+    - comparable은 general interface이기 때문에 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
+    - type argument T가 type constraint C를 충족한다는 의미는 T가 C의 type set에 포함된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
+        ``` go
+        type argument      type constraint                // constraint satisfaction
+
+        int                interface{ ~int }              // satisfied: int implements interface{ ~int }
+        string             comparable                     // satisfied: string implements comparable (string is strictly comparable)
+        []byte             comparable                     // not satisfied: slices are not comparable
+        any                interface{ comparable; int }   // not satisfied: any does not implement interface{ int }
+        any                comparable                     // satisfied: any is comparable and implements the basic interface any
+        struct{f any}      comparable                     // satisfied: struct{f any} is comparable and implements the basic interface any
+        any                interface{ comparable; m() }   // not satisfied: any does not implement the basic interface interface{ m() }
+        interface{ m() }   interface{ comparable; m() }   // satisfied: interface{ m() } is comparable and implements the basic interface interface{ m() }
+        ```
 - 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
-    - type parameter가 아닌 interface 타입은 비교가 가능하다(type parameter는 strictly comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교 가능하지 않을 경우 runtime panic이 발생할 수 있다.
+    - type parameter가 아닌 interface 변수는 비교가 가능하다(type parameter는 strictly comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교 가능하지 않을 경우 runtime panic이 발생할 수 있다.
     - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
     - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
 - `*`, `<-` 연산자로 시작하는 타입과 func keyword로 시작하지만 리턴 목록이 없는 타입은 모호성을 피하기 위해 필요한 경우 소괄호로 표현해야 한다.

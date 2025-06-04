@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
@@ -76,5 +75,9 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 }
 
 func main() {
-	lambda.Start(handleRequest)
+	// lambda.Start(handleRequest)
+	map1 := map[string]int{}
+	map2 := map[string]int{}
+
+	fmt.Println(map1 == map2)
 }
