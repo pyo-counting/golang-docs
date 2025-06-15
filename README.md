@@ -1,6 +1,8 @@
 ### about docs
 - go1.24.0 버전 기준으로 작성
 
+- 특정 타입의 인스턴스(값)를 생성하는 것을 주된 목적으로 하는 함수를 golang에서는 관용적으로 생성자 함수라고 부른다. 보통 `New<타입이름>` 형태의 이름을 갖는다. golang 공식 문서 도구(pkg.go.dev의 기반이 되는 godoc)는 이러한 '생성자' 패턴을 인지해서 생성자 함수를 해당 타입의 하위 목차에 배치한다.
+
 ### [A Tour of Go](https://go.dev/tour/list)
 - golang은 package로 구성되며 golang으로 개발된 프로그램은 main package을 통해 실행된다.
 - `import` 키워드를 사용해 package가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)과 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 package 이름과 동일하게 짓는다. 이는 단일 module 내 여러 package를 구성하는 경우에도 동일하게 적용(디렉토리 이름을 package 이름으로 짓는다)된다.
@@ -12,9 +14,8 @@
 - 함수 내부에서는 `:=` short assignment statement만 이용해 변수를 선언 및 초기화할 수 있다. 함수 외부에서는 항상 키워드로 시작해야 하기 때문에 사용할 수 없다.
 - 변수 선언 시 초기화를 하지 않으면 zero value가 할당된다. 숫자 타입일 경우 0, boolean 타입일 경우 false, string 타입일 경우 ""
 - golang은 묵시적 형변환이 불가능하며 항상 `T(v)` 표현식을 사용해 타입 변환을 수행해야 한다.
-- 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추른된다.
+- 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추른된다. 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 갖게된다.
 - `const` 키워드를 사용해 상수를 선언할 수 있다. 상수는 문자, 문자열, boolean, 숫자 타입일 수 있다(`:=` short assignment statement는 변수 선언시 사용되기 때문에 상수에 대해서는 사용할 수 없다).
-- 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 갖게된다.
 - 반복문을 위해 `for` 키워드만 지원한다. ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `for ... range` 문에서 slice, 배열, map, int, string을 사용해 반복할 수 있다.
 - `if`문도 `for`문과 동일하게 ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `if`문에 short assignment statement를 사용할 수 있으며 해당 변수는 `else if`, `else` 블럭에서도 사용할 수 있다.
 - `switch 테스트 표현식 {...}`문에는 `break`문을 명시할 필요없다. 테스트 표현식을 생략하는 경우 `switch true {...}`와 동일하다.
@@ -28,7 +29,7 @@
 - slice의 길이는 slice를 통해 접근할 수 있는 요소의 길이를 나타내며 용량은 실제 slice가 참조가 있는 배열 길이를 나타낸다(slice가 가리키는 첫 인덱스부터 배열의 마지막 인덱스까지).
 - `func cap(v Type) int` 내장 함수는 배열, slice, 배열을 가리키는 포인터, buffered channel의 크기를 반환한다.
 - `func len(v Type) int` 내장 함수는 배열, slice, 배열을 가리키는 포인터, map, 문자열, buffered channel(아직 읽지 않은 메시지)의 길이를 반환한다.
-- `func make(t Type, size ...IntegerType) Type` 내장 함수는 slice, map, channel 타입을 생성하는 데 사용할 수 있다. slice일 경우 두 번째, 세 번째 인자는 각각 length, capacity를 나타낸다. map의 경우 첫 번째 인자만 필요하다. slice의 경우 두 번째 인자는 buffered channel을 생성할 때 사용된다.
+- `func make(t Type, size ...IntegerType) Type` 내장 함수는 slice, map, channel 타입을 생성하는 데 사용할 수 있다. slice일 경우 두 번째, 세 번째 인자는 각각 length, capacity를 나타낸다. map의 경우 첫 번째 인자만 필요하다. channel의 경우 두 번째 인자는 buffered channel을 생성할 때 사용된다.
 - `func append(slice []Type, elems ...Type) []Type` 내장 함수를 사용해 slice 마지막 인덱스 뒤에 값을 계속 추가할 수 있다. 기존 배열의 크기가 작으면 크기가 더 큰 배열을 생성 및 할당한다.
 - `for i, v := range sli {}`와 같은 표현식을 사용해 slice에 대해 반복문을 사용할 수 있다. 변수 i는 인덱스, v는 해당 인덱스의 복사된 값을 갖는다. `_` 표현식을 사용해 할당을 하지 않을 수 있으며 v는 생략할 수도 있다.
 - `map[K]V` 타입은 맵이다. zero value은 nil이며 리터럴은 struct와 다르게 key를 생략할 수 없다. `m[key]` 표현식을 사용해 map에 저장된 요소에 접근할 수 있다. `elem = m[key]` 표현식은 변수 m에 key가 없을 경우 오류가 발생한다. 반면 `elem, ok = m[key]` 표현식은 변수 m이 key가 있으면 ok 변수에 true, 없다면 false 값을 갖는다. key가 없는 경우 elem 변수에 zero value가 할당된다.
@@ -77,8 +78,21 @@
 	    val  T
     }
     ```
-- `func close(c chan<- Type)` 함수를 사용해 사용자는 channel을 닫을 수 있다. 해당 함수는 더 이상 보낼 메시지가 없을 경우 송신 측에서 닫을 수 있도록 사용하는 것을 권장한다. 만약 수신 측에서 닫으면 이를 모르는 송신측에서 메시지를 보내면 panic에 빠질 수 있다. channel은 파일처럼 닫을 필요는 없다. 수신측에서는 `v, ok := <-ch` 문을 사용해 channel이 닫혔는지 여부를 확인할 수 있다.
-- `for i := range c {...}` 문을 사용해 channel이 닫힐 때까지 반복문을 실행할 수 있다.
+- `func close(c chan<- Type)` 함수를 사용해 사용자는 channel을 닫을 수 있다. 해당 함수는 더 이상 보낼 메시지가 없을 경우 송신 측에서 닫을 수 있도록 사용하는 것을 권장한다. 만약 수신 측에서 닫으면 이를 모르는 송신측에서 메시지를 보내면 panic에 빠질 수 있다. channel은 파일처럼 닫을 필요는 없다. 수신측에서는 `v, ok := <-ch` 문을 사용해 channel이 닫혔는지 여부를 확인할 수 있다. 채널이 닫힌 경우 첫 번째 반환 값은 channel의 underlying type zero value다.
+- `for i := range c {...}` 문을 사용해 channel이 닫힐 때까지 반복문을 실행할 수 있다. buffered channel의 경우 channel이 닫힌 후에도 buffer에 남은 메시지 개수만큼 for 문이 실행된다.
+    ``` go
+    func main() {
+
+        queue := make(chan string, 2)
+        queue <- "one"
+        queue <- "two"
+        close(queue)
+
+        for elem := range queue {
+            fmt.Println(elem)
+        }
+    }
+    ```
 
 ### [GO 프로그래밍 입문](https://codingnuri.com/golang-book/)
 - 문자열은 "(double quote), `(backtick)을 사용해 표현할 수 있다. double quote로 표현하는 문자열은 줄바꿈을 포함할 수 없으며 이스케이프 문자열 사용할 수 있다. backtick으로 표현하는 문자열은 줄바꿈을 포함할 수 있으며 이스케이프 문자열을 지원하지 않는다.
@@ -123,15 +137,8 @@
     ```
 - 하나 이상의 작업을 동시에 진행하는 것을 동시성(concurrency)라 한다. golang에서는 goroutine, channel을 통해 동시성을 지원한다.
 - `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 종료되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
-- `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 채널의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하고 메시지를 송수신하는 예시다.
+- `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 channel의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하고 메시지를 송수신하는 예시다.
     ``` go
-    package main
-
-    import (
-        "fmt"
-        "time"
-    )
-
     func pinger(c chan string) {
         for i := 0; ; i++ {
             c <- "ping" // 송신
@@ -154,12 +161,12 @@
         fmt.Scanln(&input)
     }
     ```
-- channel 타입에 `<-` 연산자를 지정해 수신 또는 송신 전용 channel을 생성할 수 있다. 기본적으로 해당 연산자를 사용하지 않고 생성하면 양방향 channel 타입을 의미한다. 만약 송신 전용 channel에 대해 수신 연산을 수행할 경우 compile 오류가 발생한다(반대도 동일).아래는 예시다.
+- channel 타입에 `<-` 연산자를 지정해 수신 또는 송신 전용 channel을 생성할 수 있다. 기본적으로 해당 연산자를 사용하지 않고 생성하면 양방향 channel 타입을 의미한다. 만약 송신 전용 channel에 대해 수신 연산을 수행할 경우 compile 오류가 발생한다(반대도 동일). 아래는 예시다.
     ``` go
     var c1 chan<- string = make(chan<- string) // 송신 전용
     var c2 <-chan string = make(<-chan string) // 수신 전용
     ```
-- `switch`문과 유사한 `select`문은 준비된(수신받을 메시지가 있거나 보낼 메시지가 있는 경우) channel의 case문을 실행한다. 하나 이상의 channel이 준비되면 어느 channel로부터 메시지를 받을지 무작위로 선택한다. 준비된 channel이 없으면 사용 가능해질 때까지 문장 실행이 차단된다. default case는 준비된 channel이 없을 경우 즉시 실행된다. 아래는 예시다. select 문을 계속 실행하기 위해 for {...}문 내에서 사용할 수 있다.
+- `switch`문과 유사한 `select`문은 준비된 channel(수신 channel의 경우 받을 메시지가 있는 경우, 송신 channel의 경우 해당 chanenl을 수신대기하고 있거나 buffered channel의 경우 buffer에 메시지가 꽉차지 않은 경우)의 case문을 실행한다. 하나 이상의 channel이 준비되면 어느 channel로부터 메시지를 받을지 무작위로 선택한다. 준비된 channel이 없으면 사용 가능해질 때까지 문장 실행이 차단된다. default case는 준비된 channel이 없을 경우 즉시 실행된다. 아래는 예시다. select 문을 계속 실행하기 위해 for {...}문 내에서 사용할 수 있다.
     ``` go
     for {
         select {
@@ -191,7 +198,7 @@
     b = [...]int{100, 3: 400, 500}
     ```
 - Slices
-    - Slices 내장 패키지는 slice를 위한 다양한 기능을 제공한다.
+    - Slices 내장 package는 slice를 위한 다양한 기능을 제공한다.
 - Strings and Runes
     - 문자열은 읽기 전용 byte slice(`[]byte`) 타입이다. go 언어의 문자열은 기본적을 UTF-8 인코딩을 사용한다. 다른 언어에서는 문자열은 character로 구성되지만 go 언어에서는 rune(int32 타입의 alias)이라는 타입을 사용한다.
     - rune literal은 single quote로 표현 가능하다. 예를 들어 'a', '1' '한'
@@ -262,7 +269,7 @@
         }
         ```
 - Range over Iterators
-    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다. 대신 강력한 동시성 기능과 함수형 프로그래밍 스타일을 활용해 interator와 유사한 동작을 구현할 수 있었따. 하지만 Go 1.23부터는 표준 라이브러리에 iter 패키지가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다.
+    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다. 대신 강력한 동시성 기능과 함수형 프로그래밍 스타일을 활용해 interator와 유사한 동작을 구현할 수 있었따. 하지만 Go 1.23부터는 standard library에 iter package가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다.
         ``` go
         // Numbers 함수가 iter.Seq 타입의 함수를 반환합니다.
         func Numbers(max int) iter.Seq[int] {
@@ -286,7 +293,18 @@
         ```
         - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다.
 - Errors
-    - golang은 에러를 별도의 함수 반환 값을 통해 명시적으로 전달한다. 일반적으로 마지막 반환 값으로 사용한다.
+    - golang은 에러를 별도의 함수 반환 값을 통해 명시적으로 전달한다. 일반적으로 마지막 반환 값으로 사용한다. 에러는 universe block에 정의된 error 타입(basic interface)으로 표현한다. standard library에 포함된 errors package는 error를 위한 다양한 기능을 제공한다.
+        ``` go
+	    err1 := errors.New("error1")
+	    err2 := fmt.Errorf("error2: [%w]", err1)
+	    fmt.Println(err2)
+	    fmt.Println(errors.Unwrap(err2))
+        ```
+        - `func New(text string) error` 함수는 문자열 메시지가 포함된 error을 생성 및 반환한다.
+        - error는 다른 error를 wrapping할 수 있다. 이를 통해 여러 error 간 chain을 만들어 error의 root cause 등의 정보를 포함할 수 있다. error wrapping의 가장 쉬운 방법은 fmt package의 `func Errorf(format string, a ...any) error` 함수를 이용하는 것이다. 이 함수는 `Unwrap() error` 또는 `Unwrap() []error` method를 갖는 error를 반환한다. 이 method들은 errors package에서 wrapping과 관련된 `func As(err error, target any) bool`(err 또는 해당 cahin에서 target에 할당할 수 있는 error가 있는지 확인), `func Is(err, target error) bool`(err 또는 해당 cahin에서 target과 동일한 error가 있는지 확인) 함수에서 내부적으로 사용되기 때문이다.
+        - `func Unwrap(err error) error` 함수는 err의 Unwrap 함수를 호출한 반환 값을 반환한다.
+- Custom Errors
+    - custom error를 직접 구현하는 경우 보통 Error postfix를 붙인다.
 - Testing and Benchmarking
     - go의 standard library에 포함된 testing package는 go package를 위한 자동화된 테스트 코드를 작성할 수 있도록 도와준다. 이 package는 주로 `go test` 명령어와 함께 사용된다. `go test` 명령어가 테스트로 인식하려면, 함수는 다음과 같은 signature를 따라야 한다.
         ``` go
@@ -298,6 +316,126 @@
     - TestXxx 함수들을 포함하는 파일의 이름은 반드시 `_test.go`로 끝나야 한다 (예: my_package_test.go). 이 파일들은 `go build`(일반적인 package 빌드) 명령어 사용 시 제외된다.
         - 테스트 파일이 테스트 대상 package와 동일 package에 속하는 경우 white box 테스트라고 부른다. 동일 package이기 때문에 테스트 대상 package의 unexported name에도 접근이 가능해 내부 구현 상세를 테스트할 수 있다.
         - 테스트 파일이 `_test` 접미사가 붙은 별도의 package에 속하는 경우 black box 테스트라고 부른다. 테스트 대상 package가 abs라면, 테스트 파일은 `package abs_test` package에 포함된다. 동일 package가 아니기 때문에 테스트 대상 package의 exported name에만 접근이 가능하다.
+- Channel Synchronization
+    - channel을 사용해 goroutine 간 실행을 동기화할 수 있다. 아래는 main() 함수가 종료되기 전에 worker() 함수가 실행되는 goroutine이 먼저 실행이 완료되도록 하는 예시다.
+        ``` go
+        func worker(done chan bool) {
+            fmt.Print("working...")
+            time.Sleep(time.Second)
+            fmt.Println("done")
+
+            done <- true
+        }
+
+        func main() {
+
+            done := make(chan bool, 1)
+            go worker(done)
+
+            <-done
+        }
+        ```
+- Timeouts
+    - channel, select, standard library의 time package에 포함된 `func After(d Duration) <-chan Time` 함수를 사용해 구현할 수 있다. 실제로는 standard library의 context package를 사용해 timeout을 구현하는 것이 더 일반적이다. Time 타입의 channel은 현재 시간을 메시지로 갖는다. `func Sleep(d Duration)` 함수는 현재 goroutine을 일정 시간 동안 중지한다.
+        ``` go
+        func main() {
+
+            c1 := make(chan string, 1)
+            go func() {
+                time.Sleep(2 * time.Second)
+                c1 <- "result 1"
+            }()
+
+            select {
+            case res := <-c1:
+                fmt.Println(res)
+            case <-time.After(1 * time.Second):
+                fmt.Println("timeout 1")
+            }
+
+            c2 := make(chan string, 1)
+            go func() {
+                time.Sleep(2 * time.Second)
+                c2 <- "result 2"
+            }()
+            select {
+            case res := <-c2:
+                fmt.Println(res)
+            case <-time.After(3 * time.Second):
+                fmt.Println("timeout 2")
+            }
+        }
+        ```
+- Non-Blocking Channel Operations
+    - select 문의 default 절을 사용해 non-blocking channel 동작을 구현할 수 있다.
+        ``` go
+        func main() {
+            messages := make(chan string)
+            signals := make(chan bool)
+
+            select {
+            case msg := <-messages:
+                fmt.Println("received message", msg)
+            default:
+                fmt.Println("no message received")
+            }
+
+            msg := "hi"
+            select {
+            case messages <- msg:
+                fmt.Println("sent message", msg)
+            default:
+                fmt.Println("no message sent")
+            }
+
+            select {
+            case msg := <-messages:
+                fmt.Println("received message", msg)
+            case sig := <-signals:
+                fmt.Println("received signal", sig)
+            default:
+                fmt.Println("no activity")
+            }
+        }
+        ```
+- Timers
+    - standard library의 time package에 포함된 Timer 타입은 미래의 단일 이벤트를 나타낸다. `func NewTimer(d Duration) *Timer` 생성자 함수는 Timer 타입을 반환하고 duration이 지난 후 현재 시간을 해당 Timer 타입의 변수가 갖는 channel의 메시지로 전달한다.
+        ``` go
+        type Timer struct {
+        	C <-chan Time
+        	// contains filtered or unexported fields
+        }
+        ```
+    - `func Sleep(d Duration)` 함수를 사용할 수도 있지만 Timer를 타입을 사용하면 `func (t *Timer) Stop() bool` method를 사용해 중간에 취소할 수도 있다.
+        ``` go
+        func main() {
+
+            timer1 := time.NewTimer(2 * time.Second)
+
+            <-timer1.C
+            fmt.Println("Timer 1 fired")
+
+            timer2 := time.NewTimer(time.Second)
+            go func() {
+                <-timer2.C
+                fmt.Println("Timer 2 fired")
+            }()
+            stop2 := timer2.Stop()
+            if stop2 {
+                fmt.Println("Timer 2 stopped")
+            }
+
+            time.Sleep(2 * time.Second)
+        }
+        ```
+- Tickers
+    - standard library의 time package에 포함된 `func NewTicker(d Duration) *Ticker` 생성자 함수는 Ticker 타입을 반환하고 duration 마다 현재 시간을 해당 Ticker 타입의 변수가 갖는 channel의 메시지로 전달한다.
+        ``` go
+        type Ticker struct {
+        	C <-chan Time // The channel on which the ticks are delivered.
+        	// contains filtered or unexported fields
+        }
+        ```
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
@@ -659,5 +797,4 @@
     (func() int)(x)  // x is converted to func() int
     func() int(x)    // x is converted to func() int (unambiguous)
     ```
-- 
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
