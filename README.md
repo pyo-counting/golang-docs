@@ -269,7 +269,7 @@
         }
         ```
 - Range over Iterators
-    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다. 대신 강력한 동시성 기능과 함수형 프로그래밍 스타일을 활용해 interator와 유사한 동작을 구현할 수 있었따. 하지만 Go 1.23부터는 standard library에 iter package가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다.
+    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다. 대신 강력한 동시성 기능과 함수형 프로그래밍 스타일을 활용해 interator와 유사한 동작을 구현할 수 있었따. 하지만 Go 1.23부터는 standard library에 iter package가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다(콜백 함수란, 다른 함수의 인자로 넘겨져서 그 함수 안에서 특정 조건이나 이벤트가 발생했을 때 호출되는 함수를 말한다).
         ``` go
         // Numbers 함수가 iter.Seq 타입의 함수를 반환합니다.
         func Numbers(max int) iter.Seq[int] {
@@ -292,6 +292,12 @@
         }
         ```
         - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다.
+            ``` go
+            type (
+            	Seq[V any]     func(yield func(V) bool)
+            	Seq2[K, V any] func(yield func(K, V) bool)
+            )
+            ```
 - Errors
     - golang은 에러를 별도의 함수 반환 값을 통해 명시적으로 전달한다. 일반적으로 마지막 반환 값으로 사용한다. 에러는 universe block에 정의된 error 타입(basic interface)으로 표현한다. standard library에 포함된 errors package는 error를 위한 다양한 기능을 제공한다.
         ``` go
@@ -301,8 +307,9 @@
 	    fmt.Println(errors.Unwrap(err2))
         ```
         - `func New(text string) error` 함수는 문자열 메시지가 포함된 error을 생성 및 반환한다.
-        - error는 다른 error를 wrapping할 수 있다. 이를 통해 여러 error 간 chain을 만들어 error의 root cause 등의 정보를 포함할 수 있다. error wrapping의 가장 쉬운 방법은 fmt package의 `func Errorf(format string, a ...any) error` 함수를 이용하는 것이다. 이 함수는 `Unwrap() error` 또는 `Unwrap() []error` method를 갖는 error를 반환한다. 이 method들은 errors package에서 wrapping과 관련된 `func As(err error, target any) bool`(err 또는 해당 cahin에서 target에 할당할 수 있는 error가 있는지 확인), `func Is(err, target error) bool`(err 또는 해당 cahin에서 target과 동일한 error가 있는지 확인) 함수에서 내부적으로 사용되기 때문이다.
-        - `func Unwrap(err error) error` 함수는 err의 Unwrap 함수를 호출한 반환 값을 반환한다.
+        - error e가 `Unwrap() error` 또는 `Unwrap() []error` method를 갖고 있는 경우 다른 error를 wrapping할 수 있다. wrapping을 사용해 여러 error 간 chain을 만들어 error의 root cause 등의 정보를 포함할 수 있다. error wrapping의 가장 쉬운 방법은 fmt package의 `func Errorf(format string, a ...any) error` 함수를 이용하는 것이다.
+        - `func As(err error, target any) bool`(err 또는 해당 cahin에서 target에 할당할 수 있는 error가 있는지 확인), `func Is(err, target error) bool`(err 또는 해당 cahin에서 target과 동일한 error가 있는지 확인) 함수는 재귀적으로 error의 Unwrap method를 실행해 검사한다.
+        - `func Unwrap(err error) error` 함수는 매개변수 err의 Unwrap method를 호출한 결과 값을 반환한다.
 - Custom Errors
     - custom error를 직접 구현하는 경우 보통 Error postfix를 붙인다.
 - Testing and Benchmarking
