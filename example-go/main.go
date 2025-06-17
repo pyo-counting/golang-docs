@@ -15,26 +15,16 @@ import (
 
 var testMultiStageYaml = `
 pipeline_stages:
-- match:
-    selector: "{match=\"true\"}"
-    stages:
-    - docker:
-    - regex:
-        expression: "^(?P<ip>\\S+) (?P<identd>\\S+) (?P<user>\\S+) \\[(?P<timestamp>[\\w:/]+\\s[+\\-]\\d{4})\\] \"(?P<action>\\S+)\\s?(?P<path>\\S+)?\\s?(?P<protocol>\\S+)?\" (?P<status>\\d{3}|-) (?P<size>\\d+|-)\\s?\"?(?P<referer>[^\"]*)\"?\\s?\"?(?P<useragent>[^\"]*)?\"?$"
-    - regex:
-        source:     filename
-        expression: "(?P<service>[^\\/]+)\\.log"
-    - timestamp:
-        source: timestamp
-        format: "02/Jan/2006:15:04:05 -0700"
-    - labels:
-        action:
-        service:
-        status_code: "status"
-- match:
-    selector: "{match=\"false\"}"
-    action: drop
+- json:
+    expressions:
+      log:
+      stream:
+      time:
+- labels:
+    stream:
 `
+
+var testLogEntry = `{"log":"11.11.11.11 - frank [25/Jan/2000:14:00:01 -0500] \"GET /1986.js HTTP/1.1\" 200 932 \"-\" \"Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.1.7) Gecko/20091221 Firefox/3.5.7 GTB6\"","stream":"stderr","time":"2019-04-30T02:12:41.8443515Z"}`
 
 func loadConfig(yml string) stages.PipelineStages {
 	var config map[string]interface{}
@@ -45,32 +35,39 @@ func loadConfig(yml string) stages.PipelineStages {
 	return config["pipeline_stages"].([]interface{})
 }
 
-func newEntry(ex map[string]interface{}, lbs model.LabelSet, line string, ts time.Time) stages.Entry {
-	if ex == nil {
-		ex = map[string]interface{}{}
-	}
-	if lbs == nil {
-		lbs = model.LabelSet{}
-	}
-	return stages.Entry{
-		Extracted: ex,
-		Entry: api.Entry{
-			Labels: lbs,
-			Entry: logproto.Entry{
-				Timestamp: ts,
-				Line:      line,
-			},
-		},
-	}
-}
+type noopRegisterer struct{}
+
+func (n noopRegisterer) Register(prometheus.Collector) error     { return nil }
+func (n noopRegisterer) Unregister(prometheus.Collector) bool    { return true }
+func (n noopRegisterer) MustRegister(cs ...prometheus.Collector) { return }
 
 func main() {
 	start := time.Now()
-	p, err := stages.NewPipeline(log.Logger, loadConfig(testMultiStageYaml), nil, prometheus.DefaultRegisterer)
+	p, err := stages.NewPipeline(log.Logger, loadConfig(testMultiStageYaml), nil, noopRegisterer{})
 	if err != nil {
 		panic(err)
 	}
+
+	e := stages.Entry{
+		Extracted: make(map[string]interface{}),
+		Entry: api.Entry{
+			Labels: make(model.LabelSet),
+			Entry: logproto.Entry{
+				Timestamp: time.Now(),
+				Line:      testLogEntry,
+			},
+		},
+	}
+	fmt.Printf("extracted: %v\n", e.Extracted)
+	fmt.Printf("label: %v\n", e.Labels)
+	fmt.Printf("line: %v\n", e.Entry.Line)
+	c := make(chan stages.Entry, 1)
+	c <- e
+	o := <-p.Run(c)
+	fmt.Printf("extracted: %v\n", o.Extracted)
+	fmt.Printf("label: %v\n", o.Labels)
+	fmt.Printf("line: %v\n", o.Entry.Line)
+
 	end := time.Now()
 	fmt.Println("elapsed time:", end.Sub(start), " / size:", p.Size(), " / name:", p.Name())
-
 }
