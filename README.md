@@ -443,6 +443,38 @@
         	// contains filtered or unexported fields
         }
         ```
+- Worker Pools
+    - golang에서는 goroutine과 channel을 사용해 worker pool을 구현할 수 있다.
+        ``` go
+        func worker(id int, jobs <-chan int, results chan<- int) {
+            for j := range jobs {
+                fmt.Println("worker", id, "started  job", j)
+                time.Sleep(time.Second)
+                fmt.Println("worker", id, "finished job", j)
+                results <- j * 2
+            }
+        }
+
+        func main() {
+
+            const numJobs = 5
+            jobs := make(chan int, numJobs)
+            results := make(chan int, numJobs)
+
+            for w := 1; w <= 3; w++ {
+                go worker(w, jobs, results)
+            }
+
+            for j := 1; j <= numJobs; j++ {
+                jobs <- j
+            }
+            close(jobs)
+
+            for a := 1; a <= numJobs; a++ {
+                <-results
+            }
+        }
+        ```
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
