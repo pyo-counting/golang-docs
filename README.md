@@ -837,3 +837,99 @@
     func() int(x)    // x is converted to func() int (unambiguous)
     ```
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
+- `import` 문을 사용해 다른 package의 exported 필드를 사용할 수 있다.
+    ``` go
+    Import declaration          Local name of Sin
+
+    import   "lib/math"         math.Sin
+    import m "lib/math"         m.Sin
+    import . "lib/math"         Sin
+    ```
+    - import문에는 package의 경로를 명시하며 다음과 같은 규칙이 있다.
+        - package 이름과 경로가 일치하면 별칭을 사용하지 않아도 되며 package 이름으로 접근할 수 있다.
+        - package 이름과 경로가 일치하지 않으면 별칭이 필요하다.
+        - 별칭 `.`은 해당 package의 exported 필드를 자신의 소스 파일 block에 선헌하기 때문에 수식어 없이 접근해야 한다.
+        - 별칭 `_`을 사용해 package의 exported 필드를 사용하지 않지만 초기화 목적으로 사용할 수 있다.
+
+### [Developing modules](https://go.dev/doc/)
+- Organizing a Go module
+    - go 프로젝트는 `import`-ing 코드, `go install`코드로 구성될 수 있다.
+        - Basic package or command: 단일 module과 단일 package로 구성된 경우 module의 루트 디렉토리에서 모든 파일을 관리
+            ```
+            // example 1
+            project-root-directory/
+              go.mod
+              modname.go
+              modname_test.go
+
+            // example 2
+            project-root-directory/
+              go.mod
+              modname.go
+              modname_test.go
+              auth.go
+              auth_test.go
+              hash.go
+              hash_test.go
+            ```
+        - Package or command with supporting packages: 구성이 복잡해지는 경우 일부 기능은 별도의 package로 구성한다. 처음에는 `internal` package를 사용해 module 외부로 해당 기능을 노출하지 않는다.
+            ```
+            project-root-directory/
+              internal/
+                auth/
+                  auth.go
+                  auth_test.go
+                hash/
+                  hash.go
+                  hash_test.go
+              go.mod
+              modname.go
+              modname_test.go
+            ```
+        - Multiple packages: module이 여러 importable package를 제공하는 경우 각 package를 별도 디렉토리로 구성한다.
+            ```
+            project-root-directory/
+              go.mod
+              modname.go
+              modname_test.go
+              auth/
+                auth.go
+                auth_test.go
+                token/
+                  token.go
+                  token_test.go
+              hash/
+                hash.go
+              internal/
+                trace/
+                  trace.go
+            ```
+        - Multiple commands: 단일 module에 여러 cli(또는 executable program) 프로그램을 구성하는 경우 디렉토리를 구분한다.
+            ```
+            project-root-directory/
+              go.mod
+              internal/
+                ... shared internal packages
+              prog1/
+                main.go
+              prog2/
+                main.go
+            ```
+        - Packages and commands in the same repository: importable package와 cli(또는 executable program) 프로그램을 포함하는 경우 아래와 같이 구분한다.
+            ```
+            project-root-directory/
+              go.mod
+              modname.go
+              modname_test.go
+              auth/
+                auth.go
+                auth_test.go
+              internal/
+                ... internal packages
+              cmd/
+                prog1/
+                  main.go
+                prog2/
+                  main.go
+            ```
+        - Server project: 서버 프로젝트는 대부분 자체 사용 목적을 갖기 때문에 internal package를 사용한다. 따라서 서버 관련 로직을 구현하는 package는 `internal` 디렉토리에 두는 것을 권장한다. 그리고 서버 프로젝트의 경우 대부분 go 관련 파일이 아닌 다른 많은 디렉토리가 있을 가능성이 높으므로 cli(또는 executable program) 프로그램을 `cmd` 디렉토리에 두는 것을 권장한다.
