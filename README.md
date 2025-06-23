@@ -475,6 +475,30 @@
             }
         }
         ```
+- Environment Variables
+    - standard library의 os package는 환경 변수 관련 기능을 제공한다.
+        - `func Environ() []string` 함수는 key=value 형식으로 표현되는 환경 변수 목록 복사본을 slice로 반환한다.
+        - `func Getenv(key string) string` 함수는 매개 변수 key에 해당하는 환경 변수 값을 반환한다. 없는 환경 변수라면 빈 값을 반환한다.
+        - `func Setenv(key, value string) error` 함수는 매개 변수 key, value 환경 변수를 설정한다.
+- Logging
+    - standard library의 log package는 자유 형식의 logger를 생성할 수 있다. 뿐만 아니라 미리 정의된 standard logger를 사용할 수 있다. standard logger는 log package의 exported 함수를 통해 직접 사용 가능하다. standard logger는 stderr에 날짜/시간/메시지를 출력한다(로그 메시지가 newline으로 종료되지 않을 경우 자동 추가). `func SetFlags(flag int)` 함수를 사용해 standard logger의 flag bit를 설정할 수 있다.
+        ``` go
+        // standard logger
+        log.Println("standard logger")
+        log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+        log.Println("with micro")
+
+        // custom logger
+        	var (
+        		buf    bytes.Buffer
+        		logger = log.New(&buf, "logger: ", log.Lshortfile)
+        	)
+
+        	logger.Print("Hello, log file!")
+
+        	fmt.Print(&buf)
+        ```
+    - standard library의 log/slog package는
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
