@@ -481,7 +481,7 @@
         - `func Getenv(key string) string` 함수는 매개 변수 key에 해당하는 환경 변수 값을 반환한다. 없는 환경 변수라면 빈 값을 반환한다.
         - `func Setenv(key, value string) error` 함수는 매개 변수 key, value 환경 변수를 설정한다.
 - Logging
-    - standard library의 log package는 자유 형식의 logger를 생성할 수 있다. 뿐만 아니라 미리 정의된 standard logger를 사용할 수 있다. standard logger는 log package의 exported 함수를 통해 직접 사용 가능하다. standard logger는 stderr에 날짜/시간/메시지를 출력한다(로그 메시지가 newline으로 종료되지 않을 경우 자동 추가). `func SetFlags(flag int)` 함수를 사용해 standard logger의 flag bit를 설정할 수 있다.
+    - standard library의 log package는 자유 형식의 logger를 생성할 수 있다. 뿐만 아니라 미리 정의된 standard logger를 사용할 수 있다. standard logger는 log package의 exported(top-level) 함수를 통해 직접 사용 가능하다. standard logger는 stderr에 날짜/시간/메시지를 출력한다(로그 메시지가 newline으로 종료되지 않을 경우 자동 추가). `func SetFlags(flag int)` 함수를 사용해 standard logger의 flag bit를 설정할 수 있다.
         ``` go
         // standard logger
         log.Println("standard logger")
@@ -498,7 +498,14 @@
 
         	fmt.Print(&buf)
         ```
-    - standard library의 log/slog package는
+    - standard library의 log/slog package는 structued logging을 제공한다.
+        - package의 exported 함수를 통해 기본 정의된 logger를 사용할 수 있다. 해당 함수는 내부적으로 logger의 method를 호출한다.
+        - slog package는 3가지 중요 타입을 정의한다.
+            - Logger: Log, Debug, Warn, Error와 같은 method를 제공하며, 해당 method가 호출되면 매개변수를 사용해 Record를 생성한다.
+            - Record: Record는 하나의 로그 항목에 대한 모든 정보를 담고 있는 데이터 구조를 나타낸다.
+            - Handler: Logger가 Record를 생성한 후, 연결된 Handler에게 전달한다. Handler는 이 Record를 받아서 자신이 정의된 방식대로 처리한다.
+        - slog에는 미리 정의된 2개 handler(TextHandler(logfmt 형식), JSONHandler(json 형식))를 제공한다.
+        - 자세한 내용은 https://velog.io/@als2004/go%EB%A1%9C%EA%B7%B8-%ED%8C%A8%ED%82%A4%EC%A7%80log-packageGo-Slog-vs-Zap-%EC%96%B4%EB%96%A4%EA%B2%83%EC%9D%B4-%EC%A2%8B%EC%9D%84%EA%B9%8C 정리 필요
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.
