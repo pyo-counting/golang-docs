@@ -1,9 +1,6 @@
 package main
 
-import (
-	"log/slog"
-	"net/http"
-)
+import "fmt"
 
 // import (
 // 	"fmt"
@@ -77,9 +74,35 @@ import (
 // 	fmt.Println("elapsed time:", end.Sub(start), " / size:", p.Size(), " / name:", p.Name())
 // }
 
+type Person struct {
+	Name string
+	age  int
+}
+
+type Korean struct {
+	Person
+	Contry string
+}
+
+func (k Korean) String() string {
+	return fmt.Sprintf("Name: %s, Age: %d, Country: %s", k.Name, k.age, k.Contry)
+}
+
+type Human interface {
+	String() string
+}
+
 func main() {
-	var svr http.Server = http.Server{}
-	if err := svr.ListenAndServe(); err != nil {
-		slog.Error("Server failed to start", "error", err)
+	var p Korean = Korean{
+		Person: Person{
+			Name: "Kim",
+			age:  30,
+		},
+		Contry: "Korea",
 	}
+
+	fmt.Println(p)
+
+	var h Human = p
+	fmt.Println(h.String())
 }
