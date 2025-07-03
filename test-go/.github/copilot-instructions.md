@@ -35,8 +35,10 @@
 
 ### 5. 코드 스타일
 - `gofmt`로 포맷된 코드
+- 전체적인 코드 스타일 가이드: [uber-go/guide](https://github.com/uber-go/guide/blob/master/style.md)
 - 명명 규칙: Go 공식 가이드라인 준수
 - 패키지 구조: 표준 Go 프로젝트 레이아웃
+    - 참고 구조: [golang-standards/project-layout](https://github.com/golang-standards/project-layout)
 - 의존성 관리: Go modules 사용
 
 ### 6. 예제 템플릿
@@ -82,7 +84,10 @@ func main() {
 - **메모리 관리**: 메모리 누수 방지, 프로파일링
 - **데이터베이스**: 커넥션 풀, 쿼리 최적화
 - **캐싱**: Redis, in-memory 캐시 패턴
-- **참조**: [Go Performance](https://github.com/dgryski/go-perfbook)
+- **참조**:
+    - [Go Performance](https://github.com/dgryski/go-perfbook)
+    - [Go Optimization Guide](https://goperf.dev/)
+    - [Scaling GO Applications](https://betterstack.com/community/guides/scaling-go/)
 
 ### 10. 인프라스트럭처 as Code
 - **Terraform**: Go로 Terraform provider 작성

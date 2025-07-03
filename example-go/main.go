@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"log/slog"
+	"net/http"
 )
 
 // import (
@@ -77,6 +78,8 @@ import (
 // }
 
 func main() {
-	log.Println("hello\n")
-	log.Print("hello\n")
+	var svr http.Server = http.Server{}
+	if err := svr.ListenAndServe(); err != nil {
+		slog.Error("Server failed to start", "error", err)
+	}
 }
