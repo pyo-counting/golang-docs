@@ -475,6 +475,7 @@
             }
         }
         ```
+- 
 - Environment Variables
     - standard library의 os package는 환경 변수 관련 기능을 제공한다.
         - `func Environ() []string` 함수는 key=value 형식으로 표현되는 환경 변수 목록 복사본을 slice로 반환한다.
@@ -509,6 +510,10 @@
 - HTTP Client
 - HTTP Server
     - HTTP router는 웹 애플리케이션에서 특정 URL 요청에 대한 처리 로직을 정의하고 연결하는 역할을 한다. 즉, 클라이언트의 요청(예: 웹 페이지 요청)을 받아 어떤 코드를 실행할지 결정하고 해당 코드를 실행하여 결과를 클라이언트에게 반환하는 과정을 관리한다. 간단히 말해, 특정 URL에 접근했을 때 어떤 페이지를 보여줄지, 어떤 데이터를 처리할지 결정하는 일종의 길잡이 역할을 수행한다.
+    - package의 exported 함수를 통해 기본 정의된 HTTP 서버를 사용할 수 있다.
+    - http.ServerMux struct는 http.Handler interface를 구현한 HTTP 요청 multiplexer다. 각 요청 URL의 패턴과 등록된 handler를 매칭하고 가장 유사한 handler를 통해 요청을 처리하도록 한다.
+- Context
+
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
 - identifier(식별자)는 변수나 타입과 같은 프로그램 엔티티의 이름을 지정한다. identifier는 하나 이상의 문자(letter)와 숫자(digit)로 이루어진 연속된 문자열로 이루어진다.

@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 // import (
 // 	"fmt"
 // 	"time"
@@ -74,35 +72,34 @@ import "fmt"
 // 	fmt.Println("elapsed time:", end.Sub(start), " / size:", p.Size(), " / name:", p.Name())
 // }
 
-type Person struct {
-	Name string
-	age  int
-}
+import (
+	"context"
+	"log"
 
-type Korean struct {
-	Person
-	Contry string
-}
-
-func (k Korean) String() string {
-	return fmt.Sprintf("Name: %s, Age: %d, Country: %s", k.Name, k.age, k.Contry)
-}
-
-type Human interface {
-	String() string
-}
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
+)
 
 func main() {
-	var p Korean = Korean{
-		Person: Person{
-			Name: "Kim",
-			age:  30,
-		},
-		Contry: "Korea",
+	// Load the Shared AWS Configuration (~/.aws/config)
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	fmt.Println(p)
+	// Create an Amazon ECR service client
+	client := ecr.NewFromConfig(cfg)
 
-	var h Human = p
-	fmt.Println(h.String())
+	results, err := client.DescribeRepositories(context.TODO(), &ecr.DescribeRepositoriesInput{
+		RepositoryNames: []string{"kps-shr-tools-ecr-pri/kurlypay-application"},
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("ECR Repository Details:")
+	for _, repo := range results.Repositories {
+		log.Printf("Name: %s, URI: %s", aws.ToString(repo.RepositoryName), aws.ToString(repo.RepositoryUri))
+	}
 }
