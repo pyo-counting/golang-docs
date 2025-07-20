@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 // import (
 // 	"fmt"
 // 	"time"
@@ -72,34 +74,17 @@ package main
 // 	fmt.Println("elapsed time:", end.Sub(start), " / size:", p.Size(), " / name:", p.Name())
 // }
 
-import (
-	"context"
-	"log"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/ecr"
-)
-
 func main() {
-	// Load the Shared AWS Configuration (~/.aws/config)
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		log.Fatal(err)
-	}
+	var a chan int = make(chan int, 10)
 
-	// Create an Amazon ECR service client
-	client := ecr.NewFromConfig(cfg)
+	go func() {
+		for range 10 {
+		}
+	}()
 
-	results, err := client.DescribeRepositories(context.TODO(), &ecr.DescribeRepositoriesInput{
-		RepositoryNames: []string{"kps-shr-tools-ecr-pri/kurlypay-application"},
-	})
-	if err != nil {
-		log.Fatal(err)
+	for i := range 10 {
+		a <- i
 	}
+	fmt.Println("channel transmission completed!")
 
-	log.Println("ECR Repository Details:")
-	for _, repo := range results.Repositories {
-		log.Printf("Name: %s, URI: %s", aws.ToString(repo.RepositoryName), aws.ToString(repo.RepositoryUri))
-	}
 }

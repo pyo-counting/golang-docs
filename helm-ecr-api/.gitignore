@@ -1,0 +1,9 @@
+# Mac/Linux
+helm-ecr-api
+
+# Windows
+helm-ecr-api.exe
+
+# Build files
+*.exe
+*.exe~
