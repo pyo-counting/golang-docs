@@ -36,10 +36,13 @@ func main() {
 
 	// RESTful API 경로 설계 (개선된 버전)
 	// - `GET /v1/helm-charts`: 모든 차트 저장소 목록 조회
-	// - `GET /v1/helm-charts/{chart-name}`: 특정 차트의 모든 태그 목록 조회
-	// - `GET /v1/helm-charts/{chart-name}?tag=...`: 특정 차트의 특정 태그 정보 조회
+	// - `GET /v1/helm-charts/{chart-name...}`: 특정 차트의 모든 버전(태그) 또는 특정 버전 정보 조회
+	//   - 쿼리: ?tag=..., ?digest=...
+	// - `GET /v1/helm-charts/{chart-name...}/files/{file-name}`: 특정 버전의 파일(values.yaml 등) 내용 조회
+	//   - 쿼리: ?tag=..., ?digest=...
 	mux.HandleFunc("GET /v1/helm-charts", helmHandler.ListHelmCharts)
-	mux.HandleFunc("GET /v1/helm-charts/", helmHandler.GetHelmChart) // 후행 슬래시로 하위 경로 처리
+	mux.HandleFunc("GET /v1/helm-charts/{chart-name...}/files/{file-name}", helmHandler.GetChartFile)
+	mux.HandleFunc("GET /v1/helm-charts/{chart-name...}", helmHandler.GetHelmChart)
 	mux.HandleFunc("GET /health", helmHandler.HealthCheck)
 
 	server := &http.Server{

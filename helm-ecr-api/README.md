@@ -29,6 +29,37 @@ ECR에 저장된 Helm Chart를 조회하는 REST API 서버입니다.
 
 `curl`을 사용하여 API를 테스트할 수 있습니다. `repo`와 `tag` 파라미터를 실제 ECR에 있는 차트 정보로 변경하세요.
 
-```sh
-curl "http://localhost:8080/helm-chart?repo=my-helm-charts/my-app&tag=1.2.3"
-```
+- **모든 Helm 차트 리포지토리 목록 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts"
+  ```
+
+- **리포지토리의 모든 차트 버전(태그) 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts/my-helm-charts/my-app"
+  ```
+
+- **특정 태그의 차트 정보 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts/my-helm-charts/my-app?tag=1.2.3"
+  ```
+
+- **특정 다이제스트의 차트 정보 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts/my-helm-charts/my-app?digest=sha256:..."
+  ```
+
+- **`values.yaml` 파일 내용 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts/my-helm-charts/my-app/files/values.yaml?tag=1.2.3"
+  ```
+
+- **`Chart.yaml` 파일 내용 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts/my-helm-charts/my-app/files/Chart.yaml?tag=1.2.3"
+  ```
+
+- **`values.schema.json` 파일 내용 조회**:
+  ```sh
+  curl "http://localhost:8080/v1/helm-charts/my-helm-charts/my-app/files/values.schema.json?tag=1.2.3"
+  ```

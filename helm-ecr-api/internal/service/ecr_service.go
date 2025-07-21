@@ -20,9 +20,9 @@ import (
 // ChartService는 Helm 차트 관련 비즈니스 로직에 대한 인터페이스입니다.
 // 이를 통해 핸들러는 실제 구현으로부터 분리되어 테스트 용이성이 높아집니다.
 type ChartService interface {
-	DescribeHelmChart(ctx context.Context, repoName, tag string) ([]types.ImageDetail, error)
+	DescribeHelmChart(ctx context.Context, repoName, tag, digest string) ([]types.ImageDetail, error)
 	ListHelmCharts(ctx context.Context) ([]types.Repository, error)
-	GetValuesSchema(ctx context.Context, repoName, tag string) ([]byte, error)
+	GetChartFile(ctx context.Context, repoName, tag, digest, fileName string) ([]byte, error)
 }
 
 // ECRService는 ChartService 인터페이스의 구현체입니다.
@@ -37,28 +37,29 @@ func NewECRService(cfg aws.Config) *ECRService {
 }
 
 // DescribeHelmChart는 ECR에서 특정 Helm 차트(OCI 이미지)의 상세 정보를 조회합니다.
-func (s *ECRService) DescribeHelmChart(ctx context.Context, repoName, tag string) ([]types.ImageDetail, error) {
+func (s *ECRService) DescribeHelmChart(ctx context.Context, repoName, tag, digest string) ([]types.ImageDetail, error) {
 	input := &ecr.DescribeImagesInput{
 		RepositoryName: aws.String(repoName),
 	}
 
-	// tag 파라미터가 있을 때만 특정 태그로 필터링
+	// tag 또는 digest 파라미터가 있을 때만 특정 이미지로 필터링
 	if tag != "" {
-		input.ImageIds = []types.ImageIdentifier{
-			{
-				ImageTag: aws.String(tag),
-			},
-		}
+		input.ImageIds = []types.ImageIdentifier{{ImageTag: aws.String(tag)}}
+	} else if digest != "" {
+		input.ImageIds = []types.ImageIdentifier{{ImageDigest: aws.String(digest)}}
 	}
 
 	result, err := s.client.DescribeImages(ctx, input)
 	if err != nil {
-		return nil, err // 에러를 그대로 반환하여 핸들러에서 처리하도록 합니다.
+		return nil, err
 	}
 
 	if len(result.ImageDetails) == 0 {
 		if tag != "" {
 			return nil, &types.ImageNotFoundException{Message: aws.String(fmt.Sprintf("chart not found with tag: %s", tag))}
+		}
+		if digest != "" {
+			return nil, &types.ImageNotFoundException{Message: aws.String(fmt.Sprintf("chart not found with digest: %s", digest))}
 		}
 		return nil, &types.RepositoryNotFoundException{Message: aws.String(fmt.Sprintf("chart not found in repository: %s", repoName))}
 	}
@@ -72,7 +73,7 @@ func (s *ECRService) ListHelmCharts(ctx context.Context) ([]types.Repository, er
 
 	result, err := s.client.DescribeRepositories(ctx, &ecr.DescribeRepositoriesInput{})
 	if err != nil {
-		return nil, err // 에러를 그대로 반환하여 핸들러에서 처리하도록 합니다.
+		return nil, err
 	}
 
 	if len(result.Repositories) == 0 {
@@ -81,18 +82,26 @@ func (s *ECRService) ListHelmCharts(ctx context.Context) ([]types.Repository, er
 	return result.Repositories, nil
 }
 
-// GetValuesSchema는 ECR에서 차트(.tar.gz)를 다운로드하고 압축을 해제하여
-// 'values.schema.json' 파일의 내용을 반환합니다.
-func (s *ECRService) GetValuesSchema(ctx context.Context, repoName, tag string) ([]byte, error) {
+// GetChartFile은 ECR에서 차트(.tar.gz)를 다운로드하고 압축을 해제하여
+// 특정 파일(예: 'values.yaml', 'Chart.yaml')의 내용을 반환합니다.
+func (s *ECRService) GetChartFile(ctx context.Context, repoName, tag, digest, fileName string) ([]byte, error) {
 	// 1. 이미지 매니페스트를 가져와서 차트 레이어의 다이제스트(digest)를 찾습니다.
 	// Helm 차트의 .tar.gz 파일은 OCI 이미지의 레이어로 저장됩니다.
-	batchGetImageOutput, err := s.client.BatchGetImage(ctx, &ecr.BatchGetImageInput{
+	batchGetImageInput := &ecr.BatchGetImageInput{
 		RepositoryName: aws.String(repoName),
-		ImageIds:       []types.ImageIdentifier{{ImageTag: aws.String(tag)}},
 		AcceptedMediaTypes: []string{
 			"application/vnd.oci.image.manifest.v1+json",
 		},
-	})
+	}
+	if tag != "" {
+		batchGetImageInput.ImageId = &types.ImageIdentifier{ImageTag: aws.String(tag)}
+	} else if digest != "" {
+		batchGetImageInput.ImageId = &types.ImageIdentifier{ImageDigest: aws.String(digest)}
+	} else {
+		return nil, fmt.Errorf("either tag or digest must be provided")
+	}
+
+	batchGetImageOutput, err := s.client.BatchGetImage(ctx, batchGetImageInput)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image manifest: %w", err)
 	}
@@ -148,7 +157,7 @@ func (s *ECRService) GetValuesSchema(ctx context.Context, repoName, tag string) 
 		return nil, fmt.Errorf("failed to read layer blob: %w", err)
 	}
 
-	// 4. 다운로드한 blob의 압축을 해제하고 'values.schema.json' 파일을 찾습니다.
+	// 4. 다운로드한 blob의 압축을 해제하고 요청된 파일을 찾습니다.
 	gzipReader, err := gzip.NewReader(bytes.NewReader(layerBlob))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
@@ -165,11 +174,18 @@ func (s *ECRService) GetValuesSchema(ctx context.Context, repoName, tag string) 
 			return nil, fmt.Errorf("failed to read tar archive: %w", err)
 		}
 
-		// 파일 경로는 'chart-name/values.schema.json' 형태일 수 있습니다.
-		if strings.HasSuffix(header.Name, "values.schema.json") {
+		// 파일 경로는 'chart-name/values.yaml' 형태일 수 있으므로 HasSuffix로 확인합니다.
+		if strings.HasSuffix(header.Name, fileName) {
 			return io.ReadAll(tarReader)
 		}
 	}
 
-	return nil, fmt.Errorf("'values.schema.json' not found in chart archive")
+	return nil, fmt.Errorf("'%s' not found in chart archive", fileName)
+}
+		if strings.HasSuffix(header.Name, fileName) {
+			return io.ReadAll(tarReader)
+		}
+	}
+
+	return nil, fmt.Errorf("'%s' not found in chart archive", fileName)
 }

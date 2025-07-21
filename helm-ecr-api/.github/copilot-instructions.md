@@ -74,7 +74,28 @@ func main() {
 - **입력 검증**: 보안 취약점 방지를 위한 입력 유효성 검사
 - **참조**: [Go Security Checklist](https://github.com/securecodewarrior/go-security-checklist)
 
-<!-- ### 8. 모니터링 및 관찰가능성 (Observability)
+### 8. REST API 설계 (REST API Design)
+- **RESTful 원칙**: 리소스(Resource) 중심으로 설계하고, 각 리소스는 고유한 URI(Uniform Resource Identifier)를 가져야 합니다.
+- **URI 설계**:
+    - 동사 대신 명사를 사용하고, 리소스는 복수형으로 표현합니다. (예: `GET /users`, `GET /users/{id}`)
+    - URI는 리소스의 계층 구조를 나타내도록 설계합니다. (예: `GET /users/{id}/posts`)
+- **HTTP 메서드**:
+    - `GET`: 리소스 조회
+    - `POST`: 리소스 생성
+    - `PUT`: 리소스 전체 수정
+    - `PATCH`: 리소스 일부 수정
+    - `DELETE`: 리소스 삭제
+- **상태 코드**: HTTP 상태 코드를 의미에 맞게 사용합니다.
+    - `2xx` (성공): `200 OK`, `201 Created`, `204 No Content`
+    - `4xx` (클라이언트 오류): `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`
+    - `5xx` (서버 오류): `500 Internal Server Error`
+- **응답 본문**: 일관된 JSON 응답 구조를 사용합니다. (예: `{"data": ...}` 또는 에러 발생 시 `{"error": {"message": "..."}}`)
+- **버전 관리**: API URL에 버전을 명시합니다. (예: `/api/v1/...`)
+- **참조**:
+    - [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines/blob/vNext/Guidelines.md)
+    - [Google Cloud API Design Guide](https://cloud.google.com/apis/design/)
+
+<!-- ### 9. 모니터링 및 관찰가능성 (Observability)
 - **메트릭**: Prometheus, Grafana 통합
 - **로깅**: 구조화된 로깅, 로그 레벨 관리
 - **트레이싱**: OpenTelemetry, Jaeger 통합
@@ -91,21 +112,21 @@ func main() {
     - [Go Optimization Guide](https://goperf.dev/)
     - [Scaling GO Applications](https://betterstack.com/community/guides/scaling-go/)
 
-<!-- ### 10. 인프라스트럭처 as Code
+<!-- ### 11. 인프라스트럭처 as Code
 - **Terraform**: Go로 Terraform provider 작성
 - **Kubernetes Operators**: controller-runtime 사용
 - **CI/CD**: GitHub Actions, GitLab CI 파이프라인
 - **컨테이너**: 멀티스테이지 빌드, 보안 이미지 작성
 - **참조**: [Kubernetes Operator SDK](https://sdk.operatorframework.io/) -->
 
-### 11. 운영 환경 고려사항
+### 10. 운영 환경 고려사항
 - **설정 관리**: 12-factor app 원칙 준수
 - **로그 로테이션**: 디스크 공간 관리
 - **리소스 제한**: CPU, 메모리 제한 설정
 - **백업/복구**: 데이터 백업 전략
 - **장애 대응**: Circuit breaker, retry 패턴
 
-### 12. 팀 협업 및 문서화
+### 11. 팀 협업 및 문서화
 - **코드 리뷰**: 효과적인 PR 작성법
 - **문서화**: README, API 문서, 운영 가이드
 - **버전 관리**: semantic versioning, changelog 관리

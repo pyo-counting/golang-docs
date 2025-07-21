@@ -27,36 +27,29 @@ func NewHelmHandler(chartService service.ChartService, logger *slog.Logger) *Hel
 }
 
 // GetHelmChart는 특정 차트의 정보를 조회하는 HTTP 핸들러입니다.
-// - tag 쿼리 파라미터가 있으면: 특정 태그의 상세 정보를 반환
-// - tag 쿼리 파라미터가 없으면: 모든 태그 목록을 반환
-// - view=values-schema 파라미터가 있으면: values.schema.json 파일 내용을 반환
-// 예: GET /v1/helm-charts/my-repo?tag=1.2.3&view=values-schema
+// - tag 또는 digest 쿼리 파라미터가 있으면: 특정 버전의 상세 정보를 반환
+// - 쿼리 파라미터가 없으면: 모든 태그 목록을 반환
 func (h *HelmHandler) GetHelmChart(w http.ResponseWriter, r *http.Request) {
 	// URL 경로에서 리포지토리 이름을 추출합니다.
-	repoName := strings.TrimPrefix(r.URL.Path, "/v1/helm-charts/")
+	repoName := r.PathValue("chart-name")
 	tag := r.URL.Query().Get("tag")
-	view := r.URL.Query().Get("view")
+	digest := r.URL.Query().Get("digest")
 
 	if repoName == "" {
-		h.logger.Warn("missing required query parameters", "repo", repoName)
+		h.logger.Warn("missing repository name in URL path")
 		http.Error(w, "missing repository name in URL path", http.StatusBadRequest)
 		return
 	}
 
-	// view 파라미터에 따라 분기 처리
-	if view == "values-schema" {
-		if tag == "" {
-			http.Error(w, "tag is required for values-schema view", http.StatusBadRequest)
-			return
-		}
-		h.getValuesSchema(w, r, repoName, tag)
+	if tag != "" && digest != "" {
+		http.Error(w, "tag and digest cannot be specified simultaneously", http.StatusBadRequest)
 		return
 	}
 
-	// 저장소에 있는 이미지 정보 조회 (tag 유무에 따라 서비스에서 다르게 처리)
-	h.logger.Info("request to get helm chart info", "repo", repoName, "tag", tag)
+	// 저장소에 있는 이미지 정보 조회 (tag 또는 digest 유무에 따라 서비스에서 다르게 처리)
+	h.logger.Info("request to get helm chart info", "repo", repoName, "tag", tag, "digest", digest)
 
-	chart, err := h.chartService.DescribeHelmChart(r.Context(), repoName, tag)
+	chart, err := h.chartService.DescribeHelmChart(r.Context(), repoName, tag, digest)
 	if err != nil {
 		h.logger.Error("failed to describe helm chart", "error", err)
 
@@ -79,19 +72,53 @@ func (h *HelmHandler) GetHelmChart(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *HelmHandler) getValuesSchema(w http.ResponseWriter, r *http.Request, repoName, tag string) {
-	h.logger.Info("request to get values.schema.json", "repo", repoName, "tag", tag)
+// GetChartFile은 차트 아카이브 내의 특정 파일을 조회하는 핸들러입니다.
+// 예: GET /v1/files/my-repo/my-app/values.yaml?tag=1.2.3
+func (h *HelmHandler) GetChartFile(w http.ResponseWriter, r *http.Request) {
+	repoName := r.PathValue("chart-name")
+	fileName := r.PathValue("file-name")
+	tag := r.URL.Query().Get("tag")
+	digest := r.URL.Query().Get("digest")
 
-	schemaBytes, err := h.chartService.GetValuesSchema(r.Context(), repoName, tag)
+	if repoName == "" || fileName == "" {
+		http.Error(w, "repository name and file name are required in URL path", http.StatusBadRequest)
+		return
+	}
+
+	if tag == "" && digest == "" {
+		http.Error(w, "tag or digest is required", http.StatusBadRequest)
+		return
+	}
+
+	if tag != "" && digest != "" {
+		http.Error(w, "tag and digest cannot be specified simultaneously", http.StatusBadRequest)
+		return
+	}
+
+	h.logger.Info("request to get chart file", "repo", repoName, "tag", tag, "digest", digest, "file", fileName)
+
+	// 파일 확장자에 따라 적절한 Content-Type을 설정합니다.
+	// YAML의 공식 IANA MIME 타입은 없지만, 'application/x-yaml'이 널리 사용되는 관례입니다.
+	var contentType string
+	if strings.HasSuffix(fileName, ".json") {
+		contentType = "application/json"
+	} else if strings.HasSuffix(fileName, ".yaml") || strings.HasSuffix(fileName, ".yml") {
+		contentType = "application/x-yaml; charset=utf-8"
+	} else {
+		contentType = "text/plain; charset=utf-8"
+	}
+
+	fileBytes, err := h.chartService.GetChartFile(r.Context(), repoName, tag, digest, fileName)
 	if err != nil {
-		h.logger.Error("failed to get values.schema.json", "error", err)
+		h.logger.Error("failed to get chart file", "error", err, "file", fileName)
 		// TODO: 서비스 계층에서 반환된 에러 유형에 따라 더 구체적인 상태 코드를 반환하도록 개선할 수 있습니다.
+		// 예를 들어, 파일이 없는 경우 404 Not Found를 반환할 수 있습니다.
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(schemaBytes)
+	w.Header().Set("Content-Type", contentType)
+	w.Write(fileBytes)
 }
 
 // ListHelmCharts는 ECR의 모든 Helm 차트 리포지토리를 조회하는 핸들러입니다.
