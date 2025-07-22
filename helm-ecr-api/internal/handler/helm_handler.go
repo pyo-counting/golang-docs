@@ -2,20 +2,31 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"helm-ecr-api/internal/service"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
+)
+
+// contextKey는 컨텍스트 값의 키로 사용되어 충돌을 방지합니다.
+type contextKey string
+
+const (
+	chartNameKey contextKey = "chart-name"
+	fileNameKey  contextKey = "file-name"
 )
 
 // HelmHandler는 HTTP 요청을 처리하고 서비스 계층을 호출합니다.
 type HelmHandler struct {
 	chartService service.ChartService
 	logger       *slog.Logger
+	filePattern  *regexp.Regexp
 }
 
 // NewHelmHandler는 HelmHandler의 새 인스턴스를 생성합니다.
@@ -23,6 +34,8 @@ func NewHelmHandler(chartService service.ChartService, logger *slog.Logger) *Hel
 	return &HelmHandler{
 		chartService: chartService,
 		logger:       logger,
+		// 정규식을 한 번만 컴파일하여 재사용합니다.
+		filePattern: regexp.MustCompile(`^(.+)/files/([^/]+)$`),
 	}
 }
 
@@ -31,18 +44,16 @@ func NewHelmHandler(chartService service.ChartService, logger *slog.Logger) *Hel
 // - 쿼리 파라미터가 없으면: 모든 태그 목록을 반환
 func (h *HelmHandler) GetHelmChart(w http.ResponseWriter, r *http.Request) {
 	// URL 경로에서 리포지토리 이름을 추출합니다.
-	repoName := r.PathValue("chart-name")
+	repoName, ok := r.Context().Value(chartNameKey).(string)
+	if !ok || repoName == "" {
+		h.respondError(w, http.StatusBadRequest, "missing repository name in URL path")
+		return
+	}
 	tag := r.URL.Query().Get("tag")
 	digest := r.URL.Query().Get("digest")
 
-	if repoName == "" {
-		h.logger.Warn("missing repository name in URL path")
-		http.Error(w, "missing repository name in URL path", http.StatusBadRequest)
-		return
-	}
-
 	if tag != "" && digest != "" {
-		http.Error(w, "tag and digest cannot be specified simultaneously", http.StatusBadRequest)
+		h.respondError(w, http.StatusBadRequest, "tag and digest cannot be specified simultaneously")
 		return
 	}
 
@@ -57,41 +68,42 @@ func (h *HelmHandler) GetHelmChart(w http.ResponseWriter, r *http.Request) {
 		var notFoundErr *types.ImageNotFoundException
 		var repoNotFoundErr *types.RepositoryNotFoundException
 
-		if errors.As(err, &notFoundErr) || errors.As(err, &repoNotFoundErr) {
-			http.Error(w, err.Error(), http.StatusNotFound)
+		if errors.Is(err, service.ErrRepositoryNotAllowed) {
+			h.respondError(w, http.StatusForbidden, err.Error())
+		} else if errors.As(err, &notFoundErr) || errors.As(err, &repoNotFoundErr) {
+			h.respondError(w, http.StatusNotFound, err.Error())
 		} else {
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			h.respondError(w, http.StatusInternalServerError, "internal server error")
 		}
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(chart); err != nil {
-		h.logger.Error("failed to encode response", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	}
+	h.respondJSON(w, http.StatusOK, chart)
 }
 
 // GetChartFile은 차트 아카이브 내의 특정 파일을 조회하는 핸들러입니다.
-// 예: GET /v1/files/my-repo/my-app/values.yaml?tag=1.2.3
+// 예: GET /v1/helm-charts/my-repo/my-app/files/values.yaml?tag=1.2.3
 func (h *HelmHandler) GetChartFile(w http.ResponseWriter, r *http.Request) {
-	repoName := r.PathValue("chart-name")
-	fileName := r.PathValue("file-name")
+	repoName, ok := r.Context().Value(chartNameKey).(string)
+	if !ok || repoName == "" {
+		h.respondError(w, http.StatusBadRequest, "missing repository name in URL path")
+		return
+	}
+	fileName, ok := r.Context().Value(fileNameKey).(string)
+	if !ok || fileName == "" {
+		h.respondError(w, http.StatusBadRequest, "missing file name in URL path")
+		return
+	}
 	tag := r.URL.Query().Get("tag")
 	digest := r.URL.Query().Get("digest")
 
-	if repoName == "" || fileName == "" {
-		http.Error(w, "repository name and file name are required in URL path", http.StatusBadRequest)
-		return
-	}
-
 	if tag == "" && digest == "" {
-		http.Error(w, "tag or digest is required", http.StatusBadRequest)
+		h.respondError(w, http.StatusBadRequest, "tag or digest is required")
 		return
 	}
 
 	if tag != "" && digest != "" {
-		http.Error(w, "tag and digest cannot be specified simultaneously", http.StatusBadRequest)
+		h.respondError(w, http.StatusBadRequest, "tag and digest cannot be specified simultaneously")
 		return
 	}
 
@@ -111,14 +123,45 @@ func (h *HelmHandler) GetChartFile(w http.ResponseWriter, r *http.Request) {
 	fileBytes, err := h.chartService.GetChartFile(r.Context(), repoName, tag, digest, fileName)
 	if err != nil {
 		h.logger.Error("failed to get chart file", "error", err, "file", fileName)
-		// TODO: 서비스 계층에서 반환된 에러 유형에 따라 더 구체적인 상태 코드를 반환하도록 개선할 수 있습니다.
-		// 예를 들어, 파일이 없는 경우 404 Not Found를 반환할 수 있습니다.
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+
+		// 서비스 계층에서 정의한 커스텀 에러를 확인하여 적절한 상태 코드를 반환합니다.
+		if errors.Is(err, service.ErrChartNotFound) {
+			h.respondError(w, http.StatusNotFound, err.Error())
+		} else if errors.Is(err, service.ErrRepositoryNotAllowed) {
+			h.respondError(w, http.StatusForbidden, err.Error())
+		} else {
+			h.respondError(w, http.StatusInternalServerError, "internal server error")
+		}
 		return
 	}
 
 	w.Header().Set("Content-Type", contentType)
 	w.Write(fileBytes)
+}
+
+// RouteChartDetails는 /v1/helm-charts/ 경로에 대한 요청을 분석하여
+// 적절한 핸들러로 분기하는 서브-라우터 역할을 합니다.
+func (h *HelmHandler) RouteChartDetails(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/v1/helm-charts/")
+
+	// 미리 컴파일된 정규식을 사용하여 .../files/... 패턴을 찾습니다.
+	matches := h.filePattern.FindStringSubmatch(path)
+
+	if len(matches) == 3 {
+		// 파일 조회 요청: /v1/helm-charts/{chart-name}/files/{file-name}
+		chartName := matches[1]
+		fileName := matches[2]
+
+		// 컨텍스트에 파라미터를 추가하여 핸들러에 전달합니다.
+		ctx := context.WithValue(r.Context(), chartNameKey, chartName)
+		ctx = context.WithValue(ctx, fileNameKey, fileName)
+		h.GetChartFile(w, r.WithContext(ctx))
+	} else {
+		// 차트 정보 조회 요청: /v1/helm-charts/{chart-name}
+		chartName := path
+		ctx := context.WithValue(r.Context(), chartNameKey, chartName)
+		h.GetHelmChart(w, r.WithContext(ctx))
+	}
 }
 
 // ListHelmCharts는 ECR의 모든 Helm 차트 리포지토리를 조회하는 핸들러입니다.
@@ -129,24 +172,29 @@ func (h *HelmHandler) ListHelmCharts(w http.ResponseWriter, r *http.Request) {
 	charts, err := h.chartService.ListHelmCharts(r.Context())
 	if err != nil {
 		h.logger.Error("failed to list helm charts", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		h.respondError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(charts); err != nil {
-		h.logger.Error("failed to encode response", "error", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-	}
+	h.respondJSON(w, http.StatusOK, charts)
 }
 
 // HealthCheck는 서비스의 상태를 확인하는 간단한 핸들러입니다.
 // 200 OK 응답을 반환하여 서비스가 살아있음을 알립니다.
 func (h *HelmHandler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+	h.respondJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// respondJSON은 JSON 응답을 작성하는 헬퍼 함수입니다.
+func (h *HelmHandler) respondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	// 간단한 JSON 응답을 보냅니다.
-	if err := json.NewEncoder(w).Encode(map[string]string{"status": "ok"}); err != nil {
-		h.logger.Error("failed to write health check response", "error", err)
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		h.logger.Error("failed to encode response", "error", err)
 	}
+}
+
+// respondError는 JSON 형식의 에러 응답을 작성하는 헬퍼 함수입니다.
+func (h *HelmHandler) respondError(w http.ResponseWriter, status int, message string) {
+	h.respondJSON(w, status, map[string]string{"error": message})
 }

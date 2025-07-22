@@ -25,6 +25,22 @@ ECR에 저장된 Helm Chart를 조회하는 REST API 서버입니다.
     go run ./cmd/api
     ```
 
+    또는 Docker를 사용하여 실행할 수도 있습니다.
+
+    ```sh
+    docker run -p 8080:8080 \
+      -e AWS_REGION="ap-northeast-2" \
+      -e AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY" \
+      -e AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_KEY" \
+      helm-ecr-api:latest
+    ```
+
+## 설정
+
+-   `PORT`: 서버가 실행될 포트를 지정합니다. (기본값: `8080`)
+-   `HELM_REPOSITORIES`: API를 통해 노출할 ECR 리포지토리 목록을 콤마(`,`)로 구분하여 지정합니다. (필수)
+    -   예: `export HELM_REPOSITORIES="my-charts/app1,my-charts/app2"`
+
 ## API 테스트
 
 `curl`을 사용하여 API를 테스트할 수 있습니다. `repo`와 `tag` 파라미터를 실제 ECR에 있는 차트 정보로 변경하세요.

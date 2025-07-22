@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -20,6 +21,14 @@ func main() {
 	// 1. 로거 설정
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
+	// 환경 변수에서 허용할 Helm 리포지토리 목록을 읽어옵니다.
+	allowedReposStr := os.Getenv("HELM_REPOSITORIES")
+	if allowedReposStr == "" {
+		logger.Error("HELM_REPOSITORIES environment variable must be set")
+		os.Exit(1)
+	}
+	allowedRepos := strings.Split(allowedReposStr, ",")
+
 	// 2. AWS 설정 로드
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -28,25 +37,25 @@ func main() {
 	}
 
 	// 3. 서비스 및 핸들러 계층 초기화 (의존성 주입)
-	ecrSvc := service.NewECRService(cfg)
+	ecrSvc := service.NewECRService(cfg, allowedRepos)
 	helmHandler := handler.NewHelmHandler(ecrSvc, logger)
 
 	// 4. 라우터 설정
 	mux := http.NewServeMux()
 
 	// RESTful API 경로 설계 (개선된 버전)
-	// - `GET /v1/helm-charts`: 모든 차트 저장소 목록 조회
-	// - `GET /v1/helm-charts/{chart-name...}`: 특정 차트의 모든 버전(태그) 또는 특정 버전 정보 조회
-	//   - 쿼리: ?tag=..., ?digest=...
-	// - `GET /v1/helm-charts/{chart-name...}/files/{file-name}`: 특정 버전의 파일(values.yaml 등) 내용 조회
-	//   - 쿼리: ?tag=..., ?digest=...
+	// /v1/helm-charts/ 로 시작하는 모든 요청을 RouteChartDetails 핸들러로 위임합니다.
 	mux.HandleFunc("GET /v1/helm-charts", helmHandler.ListHelmCharts)
-	mux.HandleFunc("GET /v1/helm-charts/{chart-name...}/files/{file-name}", helmHandler.GetChartFile)
-	mux.HandleFunc("GET /v1/helm-charts/{chart-name...}", helmHandler.GetHelmChart)
+	mux.HandleFunc("GET /v1/helm-charts/", helmHandler.RouteChartDetails) // Prefix-based routing
 	mux.HandleFunc("GET /health", helmHandler.HealthCheck)
 
+	// 환경 변수에서 포트를 읽어오고, 설정되지 않은 경우 기본값 8080을 사용합니다.
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: mux,
 	}
 
