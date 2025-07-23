@@ -43,10 +43,10 @@ func main() {
 	// 4. 라우터 설정
 	mux := http.NewServeMux()
 
-	// RESTful API 경로 설계 (개선된 버전)
-	// /v1/helm-charts/ 로 시작하는 모든 요청을 RouteChartDetails 핸들러로 위임합니다.
-	mux.HandleFunc("GET /v1/helm-charts", helmHandler.ListHelmCharts)
-	mux.HandleFunc("GET /v1/helm-charts/", helmHandler.RouteChartDetails) // Prefix-based routing
+	// RESTful API 경로 설계 (통합 라우터 버전)
+	// 모든 /v1/helm-charts 요청을 통합 라우터가 처리합니다.
+	mux.HandleFunc("GET /v1/helm-charts", helmHandler.RouteHelmCharts)     // 리스트 조회
+	mux.HandleFunc("GET /v1/helm-charts/{rest...}", helmHandler.RouteHelmCharts)    // 상세 조회 및 파일 조회
 	mux.HandleFunc("GET /health", helmHandler.HealthCheck)
 
 	// 환경 변수에서 포트를 읽어오고, 설정되지 않은 경우 기본값 8080을 사용합니다.

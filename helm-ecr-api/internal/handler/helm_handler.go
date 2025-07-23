@@ -26,7 +26,7 @@ const (
 type HelmHandler struct {
 	chartService service.ChartService
 	logger       *slog.Logger
-	filePattern  *regexp.Regexp
+	filePathPattern  *regexp.Regexp
 }
 
 // NewHelmHandler는 HelmHandler의 새 인스턴스를 생성합니다.
@@ -35,7 +35,7 @@ func NewHelmHandler(chartService service.ChartService, logger *slog.Logger) *Hel
 		chartService: chartService,
 		logger:       logger,
 		// 정규식을 한 번만 컴파일하여 재사용합니다.
-		filePattern: regexp.MustCompile(`^(.+)/files/([^/]+)$`),
+		filePathPattern: regexp.MustCompile(`^(.+)/files/([^/]+)$`),
 	}
 }
 
@@ -121,6 +121,7 @@ func (h *HelmHandler) GetChartFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fileBytes, err := h.chartService.GetChartFile(r.Context(), repoName, tag, digest, fileName)
+
 	if err != nil {
 		h.logger.Error("failed to get chart file", "error", err, "file", fileName)
 
@@ -139,29 +140,74 @@ func (h *HelmHandler) GetChartFile(w http.ResponseWriter, r *http.Request) {
 	w.Write(fileBytes)
 }
 
-// RouteChartDetails는 /v1/helm-charts/ 경로에 대한 요청을 분석하여
-// 적절한 핸들러로 분기하는 서브-라우터 역할을 합니다.
-func (h *HelmHandler) RouteChartDetails(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/v1/helm-charts/")
+// RouteHelmCharts는 모든 /v1/helm-charts 경로에 대한 요청을 분석하여
+// 적절한 핸들러로 분기하는 통합 라우터 역할을 합니다.
+func (h *HelmHandler) RouteHelmCharts(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/v1/helm-charts")
 
-	// 미리 컴파일된 정규식을 사용하여 .../files/... 패턴을 찾습니다.
-	matches := h.filePattern.FindStringSubmatch(path)
+	// 요청 로깅 (모든 helm-charts 요청을 한 곳에서 추적)
+	h.logger.Debug("routing helm-charts request", "method", r.Method, "path", path)
 
-	if len(matches) == 3 {
-		// 파일 조회 요청: /v1/helm-charts/{chart-name}/files/{file-name}
-		chartName := matches[1]
-		fileName := matches[2]
-
-		// 컨텍스트에 파라미터를 추가하여 핸들러에 전달합니다.
-		ctx := context.WithValue(r.Context(), chartNameKey, chartName)
-		ctx = context.WithValue(ctx, fileNameKey, fileName)
-		h.GetChartFile(w, r.WithContext(ctx))
-	} else {
-		// 차트 정보 조회 요청: /v1/helm-charts/{chart-name}
-		chartName := path
-		ctx := context.WithValue(r.Context(), chartNameKey, chartName)
-		h.GetHelmChart(w, r.WithContext(ctx))
+	matches := h.filePathPattern.FindStringSubmatch(strings.TrimPrefix(path, "/"))
+	switch {
+	case path == "":
+		// 리포지토리 목록 조회: GET /v1/helm-charts
+		h.ListHelmCharts(w, r)
+	case 
 	}
+
+
+	path := strings.TrimPrefix(r.URL.Path, "/v1/helm-charts")
+
+	// 요청 로깅 (모든 helm-charts 요청을 한 곳에서 추적)
+	h.logger.Debug("routing helm-charts request", "method", r.Method, "path", path)
+
+	// 경로별 라우팅 처리
+	switch {
+	case path == "":
+		// 리포지토리 목록 조회: GET /v1/helm-charts
+		h.ListHelmCharts(w, r)
+
+	case strings.Contains(path, "/files/"):
+		// 파일 조회 요청: GET /v1/helm-charts/{chart-name}/files/{file-name}
+		h.routeFileRequest(w, r, path)
+
+	default:
+		// 차트 정보 조회 요청: GET /v1/helm-charts/{chart-name}
+		h.routeChartRequest(w, r, path)
+	}
+}
+
+// routeFileRequest는 파일 조회 요청을 처리합니다.
+func (h *HelmHandler) routeFileRequest(w http.ResponseWriter, r *http.Request, path string) {
+	// 미리 컴파일된 정규식을 사용하여 .../files/... 패턴을 찾습니다.
+	matches := h.filePathPattern.FindStringSubmatch(strings.TrimPrefix(path, "/"))
+
+	if len(matches) != 3 {
+		h.respondError(w, http.StatusBadRequest, "invalid file path format")
+		return
+	}
+
+	chartName := matches[1]
+	fileName := matches[2]
+
+	// 컨텍스트에 파라미터를 추가하여 핸들러에 전달합니다.
+	ctx := context.WithValue(r.Context(), chartNameKey, chartName)
+	ctx = context.WithValue(ctx, fileNameKey, fileName)
+	h.GetChartFile(w, r.WithContext(ctx))
+}
+
+// routeChartRequest는 차트 정보 조회 요청을 처리합니다.
+func (h *HelmHandler) routeChartRequest(w http.ResponseWriter, r *http.Request, path string) {
+	chartName := strings.TrimPrefix(path, "/")
+
+	if chartName == "" {
+		h.respondError(w, http.StatusBadRequest, "missing chart name in URL path")
+		return
+	}
+
+	ctx := context.WithValue(r.Context(), chartNameKey, chartName)
+	h.GetHelmChart(w, r.WithContext(ctx))
 }
 
 // ListHelmCharts는 ECR의 모든 Helm 차트 리포지토리를 조회하는 핸들러입니다.
