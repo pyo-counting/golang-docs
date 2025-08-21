@@ -308,7 +308,7 @@
         ```
         - `func New(text string) error` 함수는 문자열 메시지가 포함된 error을 생성 및 반환한다.
         - error e가 `Unwrap() error` 또는 `Unwrap() []error` method를 갖고 있는 경우 다른 error를 wrapping할 수 있다. wrapping을 사용해 여러 error 간 chain을 만들어 error의 root cause 등의 정보를 포함할 수 있다. error wrapping의 가장 쉬운 방법은 fmt package의 `func Errorf(format string, a ...any) error` 함수를 이용하는 것이다.
-        - `func As(err error, target any) bool`(err 또는 해당 cahin에서 target에 할당할 수 있는 error가 있는지 확인), `func Is(err, target error) bool`(err 또는 해당 cahin에서 target과 동일한 error가 있는지 확인) 함수는 재귀적으로 Unwrap method를 실행해 검사한다.
+        - `func As(err error, target any) bool`(err 또는 해당 chain에서 target에 할당할 수 있는 error가 있는지 확인), `func Is(err, target error) bool`(err 또는 해당 chain에서 target과 동일한 error가 있는지 확인) 함수는 재귀적으로 Unwrap method를 실행해 검사한다.
         - `func Unwrap(err error) error` 함수는 매개변수 err의 Unwrap method를 호출한 결과 값을 반환한다.
 - Custom Errors
     - custom error를 직접 구현하는 경우 보통 Error postfix를 붙인다.
