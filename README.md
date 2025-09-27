@@ -5,8 +5,9 @@
 
 ### [A Tour of Go](https://go.dev/tour/list)
 - golang은 package로 구성되며 golang으로 개발된 프로그램은 main package을 통해 실행된다.
-- `import` 키워드를 사용해 package가 위치한 경로를 명시함으로써 package를 import할 수 있다. module 이름(경로)과 하위 디렉토리 경로로 구성될 수 있으며 보통 편의성을 위해 모듈의 이름 중 마지막 경로 위치를 package 이름과 동일하게 짓는다. 이는 단일 module 내 여러 package를 구성하는 경우에도 동일하게 적용(디렉토리 이름을 package 이름으로 짓는다)된다.
-    - go 프로그램은 package로 구성된다. package는 동일 디렉토리에 있는 소스 파일의 집합으로 같이 컴파일된다. repository는 보통 1개 이상의 module을 포함한다. module은 package의 집합으로 같이 릴리즈된다. 일반적으로 repository는 루트 디렉토리 1개의 module만 포함(`go.mod` 파일을 통해 module의 경로를 명시)한다.
+- `import` 키워드를 사용해 package 경로를 명시함으로써 package를 import할 수 있다. package 이름은 module 이름 + (optional) 하위 디렉토리 경로로 구성될 수 있으며 보통 마지막 경로 위치를 package 이름과 동일하게 짓는다(main package의 경우 예외). module 이름의 예시는 `github.com/eliben/modlib`가 될 수 있다.
+    - go 프로그램은 package로 구성된다. package는 동일 디렉토리에 있는 소스 파일의 집합으로 같이 컴파일된다. repository는 보통 1개 이상의 package를 포함한다. module은 package의 집합으로 같이 릴리즈될 수 있다. 일반적으로 repository는 루트 디렉토리 1개의 module만 포함(`go.mod` 파일을 통해 module의 경로를 명시)한다.
+    - package의 경로와 실제 해당 경로에 위치한 go 소스코드에 명시한(`package` 키워드 문) package 이름이 다를 경우, package가 위치한 경로를 명시해 import하지만 실제 소스코드 내에서 사용할 때는 import 경로에 위치한 go 소스코드에 `package` 키워드 문에 명시된 이름을 통해 접근해야 한다. 이는 혼란을 야기할 수 있기 때문에 import 시 alias를 사용한다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
 - package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 내장 타입은 대문자로 시작하지 않아도 접근할 수 있다.
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
@@ -79,7 +80,7 @@
     }
     ```
 - `func close(c chan<- Type)` 함수를 사용해 사용자는 channel을 닫을 수 있다. 해당 함수는 더 이상 보낼 메시지가 없을 경우 송신 측에서 닫을 수 있도록 사용하는 것을 권장한다. 만약 수신 측에서 닫으면 이를 모르는 송신측에서 메시지를 보내면 panic에 빠질 수 있다. channel은 파일처럼 닫을 필요는 없다. 수신측에서는 `v, ok := <-ch` 문을 사용해 channel이 닫혔는지 여부를 확인할 수 있다. 채널이 닫힌 경우 첫 번째 반환 값은 channel의 underlying type zero value다.
-- `for i := range c {...}` 문을 사용해 channel이 닫힐 때까지 반복문을 실행할 수 있다. buffered channel의 경우 channel이 닫힌 후에도 buffer에 남은 메시지 개수만큼 for 문이 실행된다.
+- `for i := range c {...}` 문을 사용해 channel이 닫힐 때까지 반복문을 실행할 수 있다(channel에 데이터가 없을 경우 block). buffered channel의 경우 특별하게 channel이 닫힌 후에도 buffer에 남은 메시지 개수만큼 for 문이 실행된다.
     ``` go
     func main() {
 
@@ -269,35 +270,60 @@
         }
         ```
 - Range over Iterators
-    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다. 대신 강력한 동시성 기능과 함수형 프로그래밍 스타일을 활용해 interator와 유사한 동작을 구현할 수 있었따. 하지만 Go 1.23부터는 standard library에 iter package가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다(콜백 함수란, 다른 함수의 인자로 넘겨져서 그 함수 안에서 특정 조건이나 이벤트가 발생했을 때 호출되는 함수를 말한다).
+    - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다(기존의 for...range 문은 slice, map, channel 등 내장 타입에 한정됨). Go 1.23부터는 standard library에 iter package가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다.
+    - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다((callback 함수란, 다른 함수의 인자로 넘겨져서 그 함수 안에서 특정 조건이나 이벤트가 발생했을 때 호출되는 함수를 말함).
         ``` go
-        // Numbers 함수가 iter.Seq 타입의 함수를 반환합니다.
-        func Numbers(max int) iter.Seq[int] {
-            // 이 반환되는 익명 함수가 iter.Seq의 실제 구현체입니다.
-            // 이 함수는 'yield func(int) bool' 이라는 매개변수를 받습니다.
-            return func(yield func(int) bool) { // <-- 여기서 'yield'는 콜백 매개변수입니다.
-                for i := 0; i < max; i++ {
-                    // 개발자는 이 'yield' 콜백 매개변수를 호출하여 'i' 값을 '내보냅니다'.
-                    if !yield(i) { // yield가 false를 반환하면 소비자가 더 이상 값을 원하지 않으므로 중단합니다.
-                        return
-                    }
-                }
-            }
+        type (
+            Seq[V any]     func(yield func(V) bool)
+            Seq2[K, V any] func(yield func(K, V) bool)
+        )
+        ```
+    - 아래는 예시다.
+        ``` go
+        // 'goodIterator'는 값을 하나씩 생성하는 iterator를 만들어 반환합니다.
+        func goodIterator() iter.Seq[int] {
+        	// [A] 여기가 iterator의 본체(클로저)
+        	return func(yield func(int) bool) {
+        		fmt.Println("[Iterator] 이야기꾼이 일을 시작합니다.")
+        		// defer는 이 함수가 'return'으로 종료될 때 실행된다.
+        		defer fmt.Println("[Iterator] 이야기꾼이 퇴장합니다.")
+
+        		for i := 1; i <= 5; i++ {
+        			fmt.Printf("[Iterator] '%d'를 만들었습니다. 이제 yield를 호출합니다.\n", i)
+
+        			// [B] yield를 호출해 값을 전달하고, for 루프의 신호를 기다린다.
+        			keepGoing := yield(i)
+
+        			// [C] for 루프로부터 받은 신호를 확인한다.
+        			if !keepGoing {
+        				fmt.Printf("[Iterator] '그만(%t)' 신호를 받았습니다. 즉시 return합니다.\n", keepGoing)
+        				// [D] return을 만나면 이 함수는 완전히 종료된다.
+        				return
+        			}
+        			fmt.Printf("[Iterator] '계속(%t)' 신호를 받았습니다. 다음 작업을 준비합니다.\n", keepGoing)
+        		}
+        	}
         }
 
         func main() {
-            for num := range Numbers(5) { // <--- 여기가 소비하는 쪽입니다.
-                fmt.Printf("%d", num) // 01234
-            }
+        	fmt.Println("[Main] for 루프를 시작합니다.")
+        	// [E] goodIterator를 호출해 iterator를 준비시킨다.
+        	for num := range goodIterator() {
+        		// [F] iterator로부터 값을 받아 'num' 변수에 할당한다.
+        		fmt.Printf("  [For Loop] '%d' 값을 받았습니다.\n", num)
+
+        		// [G] 받은 값이 2이면 break로 루프를 탈출한다.
+        		if num == 2 {
+        			fmt.Println("  [For Loop] 2를 발견! break를 실행합니다.")
+        			break
+        		}
+        	}
+        	fmt.Println("[Main] for 루프가 완전히 종료되었습니다.")
         }
         ```
-        - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다.
-            ``` go
-            type (
-            	Seq[V any]     func(yield func(V) bool)
-            	Seq2[K, V any] func(yield func(K, V) bool)
-            )
-            ```
+        1. `[E] -> [A]`: for 문이 goodIterator()를 호출한다. goodIterator는 `[A]` 지점의 익명 함수(iterator 본체)를 생성하여 for 문에 전달하고 자신은 종료된다. 아직 iterator 코드는 실행되지 않는다.
+        2. `for 문 -> iterator`: iterator를 호출한다. 이 때 중요한 점은 for문이 반복 실행될 때마다 iterator 함수를 새롭게 호출하지는 않는다는 점이다(for 문은 iterator 함수의 Seq 타입(함수) 구현체를 매개변수로 전달). iterator 내 yield() 호출은 for문에 값을 전달하는 역할을한다. 값을 전달 받은 for문은 반복문을 실행하고 반복문을 다시 실행할지 결정한다. 또 실행이 필요할 경우 yield() 함수의 반환 값으로 `true`로 전달하고, `return` 문과 같이 실행이 종료될 경우 yield() 함수의 반환 값으로 `false`를 전달한다. 요약하면 iterator 함수 블락을 실행 -> yield() 함수 호출 -> for문 블락 실행 및 종료(yield() 함수의 반환 값 전달) -> iterator 함수 블락 실행
+    - 사용자가 iterator를 작성할 떄 유의할 점은 for문의 추가 실행 여부를 알려주는 yield() 함수의 반환 값에 따라 return 문을 사용해 iterator함수를 종료해야 한다. 그렇지 않으면 panic에 빠진다.
 - Errors
     - golang은 에러를 별도의 함수 반환 값을 통해 명시적으로 전달한다. 일반적으로 마지막 반환 값으로 사용한다. 에러는 universe block에 정의된 error 타입(basic interface)으로 표현한다. standard library에 포함된 errors package는 error를 위한 다양한 기능을 제공한다.
         ``` go
