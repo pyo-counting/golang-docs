@@ -334,7 +334,7 @@
         ```
         - `func New(text string) error` 함수는 문자열 메시지가 포함된 error을 생성 및 반환한다.
         - error e가 `Unwrap() error` 또는 `Unwrap() []error` method를 갖고 있는 경우 다른 error를 wrapping할 수 있다. wrapping을 사용해 여러 error 간 chain을 만들어 error의 root cause 등의 정보를 포함할 수 있다. error wrapping의 가장 쉬운 방법은 fmt package의 `func Errorf(format string, a ...any) error` 함수를 이용하는 것이다.
-        - `func As(err error, target any) bool`(err 또는 해당 chain에서 target에 할당할 수 있는 error가 있는지 확인), `func Is(err, target error) bool`(err 또는 해당 chain에서 target과 동일한 error가 있는지 확인) 함수는 재귀적으로 Unwrap method를 실행해 검사한다.
+        - `func As(err error, target any) bool`(err 또는 해당 chain에서 target에 할당할 수 있는 error가 있는지 확인하고 할당할 수 있다면 할당한 후 true 반환), `func Is(err, target error) bool`(err 또는 해당 chain에서 target과 동일한 error가 있는지 확인) 함수는 재귀적으로 Unwrap method를 실행해 검사한다.
         - `func Unwrap(err error) error` 함수는 매개변수 err의 Unwrap method를 호출한 결과 값을 반환한다.
 - Custom Errors
     - custom error를 직접 구현하는 경우 보통 Error postfix를 붙인다.
@@ -501,7 +501,95 @@
             }
         }
         ```
-- 
+- WaitGroups
+    - sync standard library는 Mutex 타입을 통해 mutex와 같은 기본적인 동기화 기능을 제공한다. 이 중 Once, WaitGroup 타입을 제외한 대부분의 타입은 low-level library routine을 위한 것이다. high-level 동기화는 channel, communication을 사용하는 것이 좋다.
+        - `func OnceFunc(f func()) func()`, `func OnceValue[T any](f func() T) func() T`, `func OnceValues[T1, T2 any](f func() (T1, T2)) func() (T1, T2)` 함수는 호출됐을 때 매개 변수인 함수 f를 최초 한 번만 실행하는 함수를 반환한다. 반환된 함수의 최초 호출 후 반환된 값을 저장하고 이 후 호출 시, 저장한 값만 반환한다.
+        - `Once` 타입은 `func (o *Once) Do(f func())` method를 사용해 매개 변수 f 함수를 한 번만 실행한다. 이후 Do method를 호출하더라도 f 함수를 실행하지 않는다. 이는 최초 한 번의 초기화 과정과 같은 작업에 적합하다.
+        - `WaitGroup` 타입은 여러 goroutine의 실행이 종료될 때까지 대기하는 데 사용된다. 일반적으로 `func (wg *WaitGroup) Go(f func())` method를 통해 goroutine을 통해 매개 변수 함수 f를 실행하고 `func (wg *WaitGroup) Wait()` method를 통해 모든 goroutine 실행이 완료될 때까지 기다린다. 내부적으로 couting semaphore를 사용하며 이전 방식인 `func (wg *WaitGroup) Add(delta int)`, `func (wg *WaitGroup) Done()` method를 조합해서 사용할 수도 있다.
+    - 해당 패키지에 정의된 타입을 포함하는 값은 복사해서 사용하면 안된다.
+- Rate Limiting
+    - goroutine, channel, time standard library의 ticker 타입을 통해 쉽게 구현할 수 있다. 아래는 기본적인 rate limit에 대한 예제다.
+        ``` go
+        requests := make(chan int, 5)
+        for i := 1; i <= 5; i++ {
+            requests <- i
+        }
+        close(requests)
+
+        limiter := time.Tick(200 * time.Millisecond)
+
+        // 1 req per 200 ms
+        for req := range requests {
+            <-limiter
+            fmt.Println("request", req, time.Now())
+        }
+        ```
+    - 아래는 burst limit에 대한 예시다.
+        ``` go
+        burstyLimiter := make(chan time.Time, 3)
+
+        // burst limit at first 3 times
+        for range 3 {
+            burstyLimiter <- time.Now()
+        }
+
+        // 1 req per 200ms after first 3 times
+        go func() {
+            for t := range time.Tick(200 * time.Millisecond) {
+                burstyLimiter <- t
+            }
+        }()
+
+        burstyRequests := make(chan int, 5)
+        for i := 1; i <= 5; i++ {
+            burstyRequests <- i
+        }
+        close(burstyRequests)
+        for req := range burstyRequests {
+            <-burstyLimiter
+            fmt.Println("request", req, time.Now())
+        }
+        ```
+- Atomic Counters
+    - 컴퓨터 프로그램은 보통 여러 thread 가 동시에 실행된다. 이 thread들이 같은 변수나 데이터(공유 자원) 에 동시에 접근하면 문제가 생길 수 있다. 이런 현상을 race condition이라고 한다. 이러한 상황을 해결하기 위한 “한 번에 한 스레드만 접근하게 하자”는 동기화(synchronization) 개념이 나타났으며 이를 구현하는 방법이 atomic operation, mutex, semaphore다.
+        - atomic operation: "쪼갤 수 없는 하나의 연산”. 즉, 어떤 연산이 실행될 때 중간에 다른 thread가 끼어들 수 없는 상태를 말한다. 주로 CPU 또는 메모리 level에서 보장 및 제공하는 기능이다.
+        - mutex(mutual exclustion lock): “상호 배제”. 동시에 여러 thread가 하나의 자원에 접근하지 못하게 하는 잠금(lock) 장치다. 즉, “누가 쓰고 있을 때는 다른 사람은 들어오지 마라”라는 규칙을 만든다. 일반적으로 lock(), unlock() 함수를 통해 공유 자원에 대한 점유 작업을 수행한다.
+        - semaphore: mutex가 “한 명만 들어와라”라면 semaphore는 “최대 N명까지 들어와도 된다”를 뜻한다. counting semaphore는 counter를 통해 접근 가능한 thread를 관리한다. binary semaphore는 접근 가능한 thread가 1개일 경우를 뜻하며 사실 상 mutex와 동일하다.
+            |      개념    |               핵심 기능              |   동시에 허용되는 스레드 수  |         비유        |            사용 예시          |
+            |:------------:|:------------------------------------:|:----------------------------:|:-------------------:|:-----------------------------:|
+            |   Atomic     |   단일 변수 연산을 원자적으로 수행   |   1 (변수 단위)              |   스위치 켜기/끄기  |   카운터 증가, 플래그 변경    |
+            |   Mutex      |   임계 구역에 대한 배타적 접근 보장  |   1 (자원 단위)              |   화장실 문 잠그기  |   공유 데이터 갱신            |
+            |   Semaphore  |   동시 접근 가능한 개수 제한         |   N (리소스 단위)            |   주차장 자리 제한  |   DB 연결 풀, 스레드 풀 제어  |
+        - sync/atomic standard library는 low-level synchronization 제어 기능을 제공한다. CPU level의 atomic operation을 사용자에게 제공하며 단일 변수에 여러 goroutine에서 접근할 때 동시성을 제공한다.
+            ``` go
+            package main
+
+            import (
+                "fmt"
+                "sync"
+                "sync/atomic"
+            )
+
+            func main() {
+
+                var ops atomic.Uint64
+
+                var wg sync.WaitGroup
+
+                for range 50 {
+                    wg.Go(func() {
+                        for range 1000 {
+
+                            ops.Add(1)
+                        }
+                    })
+                }
+
+                wg.Wait()
+
+                fmt.Println("ops:", ops.Load())
+            }
+            ```
 - Environment Variables
     - standard library의 os package는 환경 변수 관련 기능을 제공한다.
         - `func Environ() []string` 함수는 key=value 형식으로 표현되는 환경 변수 목록 복사본을 slice로 반환한다.
