@@ -590,6 +590,57 @@
                 fmt.Println("ops:", ops.Load())
             }
             ```
+- Sorting
+    - slices standard library는 slice 타입에 대한 여러 가지 함수를 제공한다. cmp standard library는 정렬과 관련된 타입과 함수를 제공한다. `cmp.Ordered` interface 타입은 <, <=, >=, > 연산자를 지원하는 타입에 대한 제한을 정의한다.
+        - `func Sort[S ~[]E, E cmp.Ordered](x S)` 함수는 ordered type slice의 오름차순 정렬을 수행한다. 실수의 경우 NaN은 가장 앞에 위치하게 된다.
+- Sorting by Functions
+    - slices standard library의 `func SortFunc[S ~[]E, E any](x S, cmp func(a, b E) int)` 함수를 통해 사용자는 매개 변수로 cmp 함수를 사용해 정렬 방법을 직접 구현할 수 있다. 이 때 cmp 함수는 a가 b보다 작을 경우 음수, a와 비가 같은 경우 0, a가 b보다 클 경우 양수를 반환해야 한다는 조건을 갖는다. 관련해서 cmp standard library의 `func Compare[T Ordered](x, y T) int` 함수를 사용할 수 있다.
+        ``` go
+        func main() {
+            fruits := []string{"peach", "banana", "kiwi"}
+
+            lenCmp := func(a, b string) int {
+                return cmp.Compare(len(a), len(b))
+            }
+
+            slices.SortFunc(fruits, lenCmp)
+            fmt.Println(fruits)
+
+            type Person struct {
+                name string
+                age  int
+            }
+
+            people := []Person{
+                Person{name: "Jax", age: 37},
+                Person{name: "TJ", age: 25},
+                Person{name: "Alex", age: 72},
+            }
+
+            slices.SortFunc(people,
+                func(a, b Person) int {
+                    return cmp.Compare(a.age, b.age)
+                })
+            fmt.Println(people)
+        }
+        ```
+- Panic
+    - panic은 예상치 못한 동작을 의미한다. 일반적으로 fail fast 또는 graceful 처리가 어려울 경우 사용한다. 아래 예시에서는 첫 번째 panic으로 나머지 코드가 실행되지 않고 종료된다. 종료될 때 에러 메시지, gorutine trace, non-zero exit code를 출력한다.
+    ``` go
+    func main() {
+
+        panic("a problem")
+
+        _, err := os.Create("/tmp/file")
+        if err != nil {
+            panic(err)
+        }
+    }
+    ```
+- Defer
+    - defer는 함수 호출의 가장 마지막 단계에서 cleanup과 같은 작업을 위해 사용된다. panic 함수는 defer 문의 모든 함수를 실행하고 죵료된다.
+- Recover
+    - panic을 중간에 복구할 수 있다. 보통 defer 함수를 사용해 panic이 발생한 함수 내에서 panic을 복구한다.
 - Environment Variables
     - standard library의 os package는 환경 변수 관련 기능을 제공한다.
         - `func Environ() []string` 함수는 key=value 형식으로 표현되는 환경 변수 목록 복사본을 slice로 반환한다.
