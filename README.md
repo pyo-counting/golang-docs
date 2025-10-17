@@ -9,13 +9,13 @@
     - go 프로그램은 package로 구성된다. package는 동일 디렉토리에 있는 소스 파일의 집합으로 같이 컴파일된다. repository는 보통 1개 이상의 package를 포함한다. module은 package의 집합으로 같이 릴리즈될 수 있다. 일반적으로 repository는 루트 디렉토리 1개의 module만 포함(`go.mod` 파일을 통해 module의 경로를 명시)한다.
     - package의 경로와 실제 해당 경로에 위치한 go 소스코드에 명시한(`package` 키워드 문) package 이름이 다를 경우, package가 위치한 경로를 명시해 import하지만 실제 소스코드 내에서 사용할 때는 import 경로에 위치한 go 소스코드에 `package` 키워드 문에 명시된 이름을 통해 접근해야 한다. 이는 혼란을 야기할 수 있기 때문에 import 시 alias를 사용한다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
-- package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 내장 타입은 대문자로 시작하지 않아도 접근할 수 있다.
+- package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 예외적으로 내장 타입은 모든 패키지에서 접근이 가능하다(exported name이 아니여도).
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
 - `var` 키워드를 사용해 변수를 선언할 수 있다. 변수 선언 시 초기화를 수행하면 변수의 타입을 생략할 수 있다.
 - 함수 내부에서는 `:=` short assignment statement만 이용해 변수를 선언 및 초기화할 수 있다. 함수 외부에서는 항상 키워드로 시작해야 하기 때문에 사용할 수 없다.
 - 변수 선언 시 초기화를 하지 않으면 zero value가 할당된다. 숫자 타입일 경우 0, boolean 타입일 경우 false, string 타입일 경우 ""
 - golang은 묵시적 형변환이 불가능하며 항상 `T(v)` 표현식을 사용해 타입 변환을 수행해야 한다.
-- 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추른된다. 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 갖게된다.
+- 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추론된다. 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 갖게된다.
 - `const` 키워드를 사용해 상수를 선언할 수 있다. 상수는 문자, 문자열, boolean, 숫자 타입일 수 있다(`:=` short assignment statement는 변수 선언시 사용되기 때문에 상수에 대해서는 사용할 수 없다).
 - 반복문을 위해 `for` 키워드만 지원한다. ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `for ... range` 문에서 slice, 배열, map, int, string을 사용해 반복할 수 있다.
 - `if`문도 `for`문과 동일하게 ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `if`문에 short assignment statement를 사용할 수 있으며 해당 변수는 `else if`, `else` 블럭에서도 사용할 수 있다.
@@ -53,7 +53,7 @@
 - interface는 struct와 유사하지만 필드의 집합이 아니라 method의 집합을 나타낸다. interface 타입은 method를 모두 구현한 타입을 값으로 가질 수 있다. `type 이름 interface {method 목록}` 표현식을 사용해 선언할 수 있다.
 - interface를 구현한다는 것은 어떤 키워드를 통해 명시적으로 수행하는 것은 아니며 단순히 interface 타입에 포함된 모든 method를 선언해 암묵적으로 구현한다. interface의 선언식과 구현이 동일 package일 필요는 없다. interface는 `(value, type)` 값을 갖는다고 생각할 수 있다.
 - interface의 zero value은 nil이며 method 호출 시 runtime error가 발생한다.
-- method를 명시하지 않은 interface를 empty interfac라고 한다. empty interface는 모든 value, 모든 type을 가질 수 있다. empty interface는 따로 `type` 키워드를 통해 선언할 필요가 없으며 변수 선언 시 `var i interface{}`와 같이 사용할 수 있다. empty interface는 알려지지 않은 타입의 값을 다룰 때 사용된다.
+- method를 명시하지 않은 interface를 empty interface라고 한다. empty interface는 모든 value, 모든 type을 가질 수 있다. empty interface는 따로 `type` 키워드를 통해 선언할 필요가 없으며 변수 선언 시 `var i interface{}`와 같이 사용할 수 있다. empty interface는 알려지지 않은 타입의 값을 다룰 때 사용된다.
 - type assertion은 interface가 nil이 아니며 타입 T임을 확인하는 것을 말한다. `i.(T)` 표현식은 interface i가 T 타입임을 나타내며 i가 가리키는 T 타입의 변수를 반환한다. 만약 nil이나 T 타입이 아닐 경우 오류가 발생한다. `t, ok := i.(T)` 표현식은 두 번째 반환 값을 통해 타입 T가 맞는지에 따른 boolean 값을 반환한다.
 - type switch문은 switch의 테스트 표현식에 `i.(type)`을 사용해 interface 변수 i에 대한 내장 타입에 대한 case문을 작성할 수 있다.
 - 가장 흔한 interface는 fmt package에 있는 Stringer interface다. fmt package는 값을 출력하기 위해 Stringer interface의 String method를 호출한다.
