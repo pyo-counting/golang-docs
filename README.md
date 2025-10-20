@@ -1,5 +1,5 @@
 ### about docs
-- go1.24.0 버전 기준으로 작성
+- go1.25.3 버전 기준으로 작성
 
 - 특정 타입의 인스턴스(값)를 생성하는 것을 주된 목적으로 하는 함수를 golang에서는 관용적으로 생성자 함수라고 부른다. 보통 `New<타입이름>` 형태의 이름을 갖는다. golang 공식 문서 도구(pkg.go.dev의 기반이 되는 godoc)는 이러한 '생성자' 패턴을 인지해서 생성자 함수를 해당 타입의 하위 목차에 배치한다.
 
@@ -9,13 +9,13 @@
     - go 프로그램은 package로 구성된다. package는 동일 디렉토리에 있는 소스 파일의 집합으로 같이 컴파일된다. repository는 보통 1개 이상의 package를 포함한다. module은 package의 집합으로 같이 릴리즈될 수 있다. 일반적으로 repository는 루트 디렉토리 1개의 module만 포함(`go.mod` 파일을 통해 module의 경로를 명시)한다.
     - package의 경로와 실제 해당 경로에 위치한 go 소스코드에 명시한(`package` 키워드 문) package 이름이 다를 경우, package가 위치한 경로를 명시해 import하지만 실제 소스코드 내에서 사용할 때는 import 경로에 위치한 go 소스코드에 `package` 키워드 문에 명시된 이름을 통해 접근해야 한다. 이는 혼란을 야기할 수 있기 때문에 import 시 alias를 사용한다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
-- package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 예외적으로 내장 타입은 모든 패키지에서 접근이 가능하다(exported name이 아니여도).
+- package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 예외적으로 내장 타입은 exported name이 아니여도 모든 패키지에서 접근이 가능하다.
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
 - `var` 키워드를 사용해 변수를 선언할 수 있다. 변수 선언 시 초기화를 수행하면 변수의 타입을 생략할 수 있다.
 - 함수 내부에서는 `:=` short assignment statement만 이용해 변수를 선언 및 초기화할 수 있다. 함수 외부에서는 항상 키워드로 시작해야 하기 때문에 사용할 수 없다.
 - 변수 선언 시 초기화를 하지 않으면 zero value가 할당된다. 숫자 타입일 경우 0, boolean 타입일 경우 false, string 타입일 경우 ""
 - golang은 묵시적 형변환이 불가능하며 항상 `T(v)` 표현식을 사용해 타입 변환을 수행해야 한다.
-- 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추론된다. 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 갖게된다.
+- 변수 선언 시 타입을 지정하지 않는 경우 변수의 타입은 초기화 값으로부터 추론된다. 초기화 값이 명시적인 타입을 갖는 경우 변수는 동일한 타입을 갖는다. 하지만 타입이 없는 숫자 상수의 경우 정밀도에 따라 `int`, `float64`, `complex128` 타입으로 추론된다. 타입이 지정되지 않은 상수는 사용되는 문맥에 따라 필요한 타입을 취한다.
 - `const` 키워드를 사용해 상수를 선언할 수 있다. 상수는 문자, 문자열, boolean, 숫자 타입일 수 있다(`:=` short assignment statement는 변수 선언시 사용되기 때문에 상수에 대해서는 사용할 수 없다).
 - 반복문을 위해 `for` 키워드만 지원한다. ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `for ... range` 문에서 slice, 배열, map, int, string을 사용해 반복할 수 있다.
 - `if`문도 `for`문과 동일하게 ()로 감싸지 않아도 되지만 블럭에는 {}가 항상 필요하다. `if`문에 short assignment statement를 사용할 수 있으며 해당 변수는 `else if`, `else` 블럭에서도 사용할 수 있다.
@@ -33,7 +33,7 @@
 - `func make(t Type, size ...IntegerType) Type` 내장 함수는 slice, map, channel 타입을 생성하는 데 사용할 수 있다. slice일 경우 두 번째, 세 번째 인자는 각각 length, capacity를 나타낸다. map의 경우 첫 번째 인자만 필요하다. channel의 경우 두 번째 인자는 buffered channel을 생성할 때 사용된다.
 - `func append(slice []Type, elems ...Type) []Type` 내장 함수를 사용해 slice 마지막 인덱스 뒤에 값을 계속 추가할 수 있다. 기존 배열의 크기가 작으면 크기가 더 큰 배열을 생성 및 할당한다.
 - `for i, v := range sli {}`와 같은 표현식을 사용해 slice에 대해 반복문을 사용할 수 있다. 변수 i는 인덱스, v는 해당 인덱스의 복사된 값을 갖는다. `_` 표현식을 사용해 할당을 하지 않을 수 있으며 v는 생략할 수도 있다.
-- `map[K]V` 타입은 맵이다. zero value은 nil이며 리터럴은 struct와 다르게 key를 생략할 수 없다. `m[key]` 표현식을 사용해 map에 저장된 요소에 접근할 수 있다. `elem = m[key]` 표현식은 변수 m에 key가 없을 경우 오류가 발생한다. 반면 `elem, ok = m[key]` 표현식은 변수 m이 key가 있으면 ok 변수에 true, 없다면 false 값을 갖는다. key가 없는 경우 elem 변수에 zero value가 할당된다.
+- `map[K]V` 타입은 맵이다. zero value은 nil이며 리터럴은 struct와 다르게 key를 생략할 수 없다. `m[key]` 표현식을 사용해 map에 저장된 요소에 접근할 수 있다. `elem = m[key]` 표현식은 변수 m에 key가 없을 zero value를 반환한다. 반면 `elem, ok = m[key]` 표현식은 변수 m이 key가 있으면 ok 변수에 true, 없다면 false 값을 갖는다(key가 없는 경우 elem 변수에 zero value가 할당).
 - `func delete(m map[Type]Type1, key Type)` 내장 함수를 사용해 맵 변수 m에서 key를 삭제할 수 있다.
 - golang은 class 개념이 없지만 type에 method를 정의할 수 있다. method는 receiver라는 인자를 받는 함수다. 함수와 다른 점은 단순히 receiver라는 특별한 인자가 있다는 것이며 기능적으로는 함수와 동일하다. method는 type이 정의된 package 내에서만 선언할 수 있다. 그렇기 때문에 int와 같은 내장 타입에는 method를 사용자가 정의할 수 없다. 물론 `type` 키워드를 사용해 int를 다시 한번 정의한 후 method를 정의할 수 있다. 아래는 int 타입을 다시 정의하고 사용하는 예시다.
     ``` go
@@ -97,7 +97,7 @@
 
 ### [GO 프로그래밍 입문](https://codingnuri.com/golang-book/)
 - 문자열은 "(double quote), `(backtick)을 사용해 표현할 수 있다. double quote로 표현하는 문자열은 줄바꿈을 포함할 수 없으며 이스케이프 문자열 사용할 수 있다. backtick으로 표현하는 문자열은 줄바꿈을 포함할 수 있으며 이스케이프 문자열을 지원하지 않는다.
-- 문자열은 byte slice(`[]byte`) 표현되기 때문에 `"hello world"[4]`와 같이 인덱스를 통해 접근 가능하다. 문자열에 `len(s)` 함수를 사용해 길이를 확인할 수 있다.
+- 문자열은 byte slice(`[]byte`)처럼 동작하기 때문에 `"hello world"[4]`와 같이 인덱스를 통해 접근 가능하다. 문자열에 `len(s)` 함수를 사용해 길이를 확인할 수 있다.
 - 함수 정의 시 가변 인자를 사용할 수 있다. 이 때 해당 가변 인자는 함수 내에서 slice로 접근할 수 있다. 함수 호출 시에는 가변 인자에 개별 인자, 배열, slice를 사용할 수 있다. slice를 매개변수로 사용 시 `fmt.Println(sli...)`와 같이 호출해야 한다.
     ``` go
     // fmt.Println() 함수 예시
@@ -138,7 +138,7 @@
     ```
 - 하나 이상의 작업을 동시에 진행하는 것을 동시성(concurrency)라 한다. golang에서는 goroutine, channel을 통해 동시성을 지원한다.
 - `go` 키워드를 사용해 goroutine을 생성할 수 있다. `go` 키워드 다음 함수 호출 표현식을 사용하면 된다. main 함수도 goroutine에서 실행되며 main 함수가 종료되면 프로그램의 종료로 이어지기 때문에 다른 goroutine이 모두 종료된 후 main 함수의 goroutine을 종료하도록 해야 한다.
-- `chan` 키워드를 사용해 channel을 생성할 수 있다. `chan` 키워드 다음 channel의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하고 메시지를 송수신하는 예시다.
+- `chan` 키워드를 사용해 channel 타입 변수를 선언할 수 있다(생성은 `make()` 내장 함수 사용). `chan` 키워드 다음 channel의 타입을 지정할 수 있다. `<-` 연산자를 사용해 channel에 메시지를 전달하거나 channel로부터 메시지를 전달받을 수 있다. 기본적으로 channel은 송신과 수신이 완료되기 전까지 blocking 된다. 이를 통해 channel은 두 goroutine이 서로 통신하고 실행 흐름을 동기화할 수 있다. 아래는 string 타입의 channel 변수를 생성하고 메시지를 송수신하는 예시다.
     ``` go
     func pinger(c chan string) {
         for i := 0; ; i++ {
@@ -194,10 +194,10 @@
 - Arrays
     - 컴파일러 시점에 배열의 개수를 결정하도록 정의할 수 있다.
     - `:`를 사용해 인덱스를 지정할 수 있다.
-    ``` go
-    b = [...]int{1, 2, 3, 4, 5}
-    b = [...]int{100, 3: 400, 500}
-    ```
+        ``` go
+        b = [...]int{1, 2, 3, 4, 5}
+        b = [...]int{100, 3: 400, 500}
+        ```
 - Slices
     - Slices 내장 package는 slice를 위한 다양한 기능을 제공한다.
 - Strings and Runes
@@ -271,7 +271,7 @@
         ```
 - Range over Iterators
     - golang은 다른 일부 언어들처럼 Iterator라는 이름의 전용 interface나 내장 타입이 명시적으로 존재하지 않았다(기존의 for...range 문은 slice, map, channel 등 내장 타입에 한정됨). Go 1.23부터는 standard library에 iter package가 공식적으로 추가되면서 iterator 개념이 훨씬 더 명시적이고 표준화된 방식으로 제공되기 시작했다. 이는 golang generics에 이어 언어의 표현력을 한층 더 확장한 중요한 변화다.
-    - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(int) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다((callback 함수란, 다른 함수의 인자로 넘겨져서 그 함수 안에서 특정 조건이나 이벤트가 발생했을 때 호출되는 함수를 말함).
+    - iter package의 `type Seq[V any] func(yield func(V) bool)`로 정의된 Seq 타입은 `for...range 문`에서 하나의 값을 반환할 때 사용된다. for _, v := range slice와 유사하다. Seq 타입은 함수이며 매개변수로 callback 함수를 매개변수로 전달 받는다. callback 함수는 개발자가 정의하지 않으며 for...range 문 호출 시, go runtime이 내부적으로 yield func(V) bool 시그니처를 갖는 익명 함수(실제 callback 함수)를 만들어서 전달한다(callback 함수란, 다른 함수의 인자로 넘겨져서 그 함수 안에서 특정 조건이나 이벤트가 발생했을 때 호출되는 함수를 말함).
         ``` go
         type (
             Seq[V any]     func(yield func(V) bool)
@@ -369,7 +369,7 @@
         }
         ```
 - Timeouts
-    - channel, select, standard library의 time package에 포함된 `func After(d Duration) <-chan Time` 함수를 사용해 구현할 수 있다. 실제로는 standard library의 context package를 사용해 timeout을 구현하는 것이 더 일반적이다. Time 타입의 channel은 현재 시간을 메시지로 갖는다. `func Sleep(d Duration)` 함수는 현재 goroutine을 일정 시간 동안 중지한다.
+    - timeout은 channel, select, standard library의 time package에 포함된 `func After(d Duration) <-chan Time` 함수를 사용해 구현할 수 있다. 실제로는 standard library의 context package를 사용해 timeout을 구현하는 것이 더 일반적이다. Time 타입의 channel은 현재 시간을 메시지로 갖는다. `func Sleep(d Duration)` 함수는 현재 goroutine을 일정 시간 동안 중지한다.
         ``` go
         func main() {
 
@@ -482,7 +482,6 @@
         }
 
         func main() {
-
             const numJobs = 5
             jobs := make(chan int, numJobs)
             results := make(chan int, numJobs)
@@ -505,7 +504,7 @@
     - sync standard library는 Mutex 타입을 통해 mutex와 같은 기본적인 동기화 기능을 제공한다. 이 중 Once, WaitGroup 타입을 제외한 대부분의 타입은 low-level library routine을 위한 것이다. high-level 동기화는 channel, communication을 사용하는 것이 좋다.
         - `func OnceFunc(f func()) func()`, `func OnceValue[T any](f func() T) func() T`, `func OnceValues[T1, T2 any](f func() (T1, T2)) func() (T1, T2)` 함수는 호출됐을 때 매개 변수인 함수 f를 최초 한 번만 실행하는 함수를 반환한다. 반환된 함수의 최초 호출 후 반환된 값을 저장하고 이 후 호출 시, 저장한 값만 반환한다.
         - `Once` 타입은 `func (o *Once) Do(f func())` method를 사용해 매개 변수 f 함수를 한 번만 실행한다. 이후 Do method를 호출하더라도 f 함수를 실행하지 않는다. 이는 최초 한 번의 초기화 과정과 같은 작업에 적합하다.
-        - `WaitGroup` 타입은 여러 goroutine의 실행이 종료될 때까지 대기하는 데 사용된다. 일반적으로 `func (wg *WaitGroup) Go(f func())` method를 통해 goroutine을 통해 매개 변수 함수 f를 실행하고 `func (wg *WaitGroup) Wait()` method를 통해 모든 goroutine 실행이 완료될 때까지 기다린다. 내부적으로 couting semaphore를 사용하며 이전 방식인 `func (wg *WaitGroup) Add(delta int)`, `func (wg *WaitGroup) Done()` method를 조합해서 사용할 수도 있다.
+        - `WaitGroup` 타입은 여러 goroutine의 실행이 종료될 때까지 대기하는 데 사용된다. 일반적으로 `func (wg *WaitGroup) Go(f func())` method을 사용해 goroutine을 통해 매개 변수 함수 f를 실행하고 `func (wg *WaitGroup) Wait()` method를 통해 모든 goroutine 실행이 완료될 때까지 기다린다. 내부적으로 couting semaphore를 사용하며 이전 방식인 `func (wg *WaitGroup) Add(delta int)`, `func (wg *WaitGroup) Done()` method를 조합해서 사용할 수도 있다.
     - 해당 패키지에 정의된 타입을 포함하는 값은 복사해서 사용하면 안된다.
 - Rate Limiting
     - goroutine, channel, time standard library의 ticker 타입을 통해 쉽게 구현할 수 있다. 아래는 기본적인 rate limit에 대한 예제다.
@@ -678,6 +677,30 @@
     - package의 exported 함수를 통해 기본 정의된 HTTP 서버를 사용할 수 있다.
     - http.ServerMux struct는 http.Handler interface를 구현한 HTTP 요청 multiplexer다. 각 요청 URL의 패턴과 등록된 handler를 매칭하고 가장 유사한 handler를 통해 요청을 처리하도록 한다.
 - Context
+    - context standard library package는 여러 goroutine이 얽혀있는 동시성 작업을 안전하고 효율적으로 관리할 수 있는 도구다. 작업의 취소, 시간 초과, 마감일을 전파(propagation), 값을 전달하는 역할을 수행한다.
+    - Context는 interface 타입으로 이 인터페이스를 구현하는 실제 context 객체들은 context package의 함수들을 통해 생성한다.
+        - root 역할을 수행하기 위한 2개의 context가 있다. `func Background() Context` 함수는 가장 기본이 되는 context 생성 시 사용되며 `func TODO() Context` 함수는 to do list처럼 아직 어떤 context를 사용할지 모를 때 사용하기 위한 용도다.
+        - `func WithCancel(parent Context) (ctx Context, cancel CancelFunc)`: 취소 가능한 context로 두 번째 반환 값인 cancel 함수를 사용해 취소할 수 있다.
+        - `func WithDeadline(parent Context, d time.Time) (Context, CancelFunc)`: 정해진 시간이 도래하면 취소 신호를 보내는 context다.
+        - `func WithTimeout(parent Context, timeout time.Duration) (Context, CancelFunc)`: 특정 시간이 지나면 취소 신호를 보내는 context다.
+        - `func WithValue(parent Context, key, val any) Context`: 요청에 한정적인 값을 전달하는 용도의 함수다.
+    - context 사용 규칙은 다음과 같다.
+        - context는 항상 함수의 첫 번째 인자로 전달한다.
+        - context를 struct의 필드로 사용하지 않는다.
+        - 절대 nil context를 사용하지 않고 대신 `context.TODO()`를 사용한다.
+        - `context.WithValue()` 함수는 요청에 한정적인 데이터를 전달하기 위한 목적으로만 사용한다. 함수에 필요한 매개변수와 구분해서 사용해야 한다.
+        - context는 부모-자식의 트리 구조를 갖는다. root context는 사용자가 생명 주기를 제어할 수 없기 때문에 main 함수나 서버 요청의 최상위 handler에서만 사용한다. root context로부터 생성된 context는 `ctx.Done()` 함수의 반환 채널이 닫힐 때 생명 주기가 끝난다. 생명 주기의 끝은 부모 -> 자식으로 전파되며 자식 context 생명 주기가 종료된다고 부모 context에 영향이 가지 않는다.
+    - Context interface 타입의 정의는 다음과 같다.
+        ``` go
+        type Context interface {
+        	Deadline() (deadline time.Time, ok bool)
+        	Done() <-chan struct{}
+        	Err() error
+        	Value(key any) any
+        }
+        ```
+    - Exit
+        - os standard library package의 `func Exit(code int)` 함수를 사용해 특정 status code와 함께 프로그램을 종료할 수 있다. 0은 성공, 이외 값은 비정상 종료를 의미(0 - 125 값 사용)한다. 해당 함수로 프로그램이 종료되면 defer 문의 함수는 실행되지 않는다.
 
 ### [The Go Programming Language Specification](https://go.dev/ref/spec)
 - 변수는 값을 갖는 저장 공간을 의미한다. 허용된 값의 목록은 변수의 타입에 의해 결정된다. static type은 변수 선언 시 알려진 타입이다(컴파일 시점에 결정됨). 반면 dynamic type은 interface 변수에 실제로 저장된 값의 실제 타입이다(runtime에 결정됨).
