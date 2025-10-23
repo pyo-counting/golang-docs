@@ -109,7 +109,7 @@
     ``` go
     // example 1
     // A struct with four embedded fields of types T1, *T2, P.T3 and *P.T4
-    type test struct {
+    type test1 struct {
     	T1        // field name is T1
     	*T2       // field name is T2
     	P.T3      // field name is T3
@@ -118,6 +118,13 @@
     }
 
     // example 2
+    type test2 struct  {
+    	T     // conflicts with embedded field *T and *P.T
+    	*T    // conflicts with embedded field T and *P.T
+    	*P.T  // conflicts with embedded field T and *T
+    }
+
+    // example 3
     type ClassInfo struct {
       Class int
       No int
@@ -714,7 +721,7 @@
     continue     for          import       return       var
     ```
 - byte는 uint8 타입, rune은 int32의 alias declaration이다.
-- struct 타입은 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 타입 식별에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다. 문자열 literal을 사용해 속성을 나타낼 수 있다.
+- struct 타입은 tagging을 사용해 속성을 나타낼 수 있다. tag는 reflection interface을 통해 확인할 수 있으며 struct의 type identity에 영향을 미치며 이외 경우에는 무시된다. 주로 json serialization 등에 사용할 수 있다. 문자열 literal을 사용해 속성을 나타낼 수 있다.
     ``` go
     type test1 struct {
     	x, y float64 ""  // an empty tag string is like an absent tag
@@ -796,7 +803,7 @@
         ```
         - 타입은 `T`, `~T`(underlying type이 T인 모든 타입), `T1|T2|T3`(union 연산자는 or) 형태로 명시할 수 있다.
             - `T`에는 interface를 사용할 수 있다.
-            - `~T`에는 underying type만 사용할 수 있으며, interface를 사용할 수 없다.
+            - `~T`에는 underlying type만 사용할 수 있으며 interface를 사용할 수 없다.
                 ``` go
                 type MyInt int
 
@@ -828,7 +835,7 @@
                     - predeclared identifier인 comparable을 포함할 수 없다.
                     - method를 갖는 interface를 포함할 수 없다. comparable을 embed할 수 없다.
                     - method을 포함한 interface를 embed할 수 없다.
-        - general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하다. 반면 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다. general interface의 유일한 목적은 generic의 type argument를 제약하는 것이다. general interface는 변수를 선언하거나, struct 필드, 컬렉션의 요소로 사용할 수 없다다. 왜냐하면 이들은 단일하고 구체적인 타입을 나타내는 것이 아니라, 타입들의 집합을 나타내기 때문이다.
+        - general interface는 type constraint, 다른 interface의 타입 요소로만 사용 가능하다. 반면 변수 선언, non-interface 타입의 구성 요소로 사용할 수 없다. 타입에는 자기 자신을 직접적, 간접적으로 사용할 수 없다. general interface의 유일한 목적은 generic의 type argument를 제약하는 것이다. general interface는 변수를 선언하거나, struct 필드, 컬렉션의 요소로 사용할 수 없다. 왜냐하면 이들은 단일하고 구체적인 타입을 나타내는 것이 아니라, 타입들의 집합을 나타내기 때문이다.
             ``` go
             // general interface는 non-interface 타입의 구성 요소로 사용할 수 없다.
             type DataHolder struct {
@@ -888,7 +895,17 @@
 	    - T가 interface가 아니면서 I의 type set에 속한다.
 	    - T가 interface이면서 T의 type set이 I의 type set의 부분 집합이다.
 - map의 key 타입은 비교 가능한 타입( `==`, `!=`)이어야 한다. 만약 key 타입이 interface라면 dynamic type에 대해 비교 연산이 가능해야 한다.
-- universe block은 모든 golang 소스 코드를 포함한다. 아래 identifier는 universe block에 선언된 predeclared identifier다. [builtin](https://pkg.go.dev/builtin) package documentation을 통해 확인할 수 있다. builtin package는 단순히 golang documentation을 위해 작성된 코드이다.
+- underlying type은 type declaration을 통해 만들어진 새로운 타입이 기본적으로 어떤 타입을 기반으로 하는지를 나타내는 개념으로 type conversion, type constraints 개념에서 사용한다.
+    - 새로운 타입을 선언하면 그 타입의 underlying type은 선언 시 지정한 타입의 underlying type과 동일하다.
+    - array, slice, map, channel, 함수 등 복합 타입도 underlying type을 갖는다.
+        ``` go
+        type MySlice []string // underlying type: []string
+        type MyStruct struct { Name string } // underlying type: struct { Name string }
+        type MyInfetface interface{} // underlying type: interface{}
+        ```
+    - 서로 다른 이름의 타입이라도 underlying type이 같으면 명시적 변환이 가능하다.
+    - Go 1.18 이후, generic에서 ~ 연산자를 사용해 underlying type 기반 type constraint로 사용 가능하다.
+- universe block은 모든 golang 소스 코드를 포함한다. 아래 identifier는 universe block에 선언된 predeclared identifier다. [builtin](https://pkg.go.dev/builtin) package documentation을 통해 확인할 수 있다. builtin package는 실제 package는 아니며 단순히 golang documentation을 위해 작성됐다.
     ```
     Types:
     	any bool byte comparable
@@ -988,7 +1005,7 @@
         	type L T   // illegal: T is a type parameter declared by the enclosing function
         }
         ```
-- type parameter(타입 파라미터)는 generic 함수, generic 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다. 사용자는 generic 함수, generic 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
+- type parameter(타입 파라미터)는 generic 함수, generic 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다(interface{}와 비교했을 때, interface{}는 runtime시 사용에 따라 타입이 정해지기 때문에 위험하지만 generics의 경우 컴파일 시점에 결정되기 때문에 안전). 사용자는 generic 함수, generic 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
     ``` go
     func PrintKeyValue[K ~string, V int](k K, v V) {
 	    fmt.Printf("key: %v, value: %v\n", k, v)
