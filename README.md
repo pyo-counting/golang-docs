@@ -7,7 +7,7 @@
 - golang은 package로 구성되며 golang으로 개발된 프로그램은 main package을 통해 실행된다.
 - `import` 키워드를 사용해 package 경로를 명시함으로써 package를 import할 수 있다. package 이름은 module 이름 + (optional) 하위 디렉토리 경로로 구성될 수 있으며 보통 마지막 경로 위치를 package 이름과 동일하게 짓는다(main package의 경우 예외). module 이름의 예시는 `github.com/eliben/modlib`가 될 수 있다.
     - go 프로그램은 package로 구성된다. package는 동일 디렉토리에 있는 소스 파일의 집합으로 같이 컴파일된다. repository는 보통 1개 이상의 package를 포함한다. module은 package의 집합으로 같이 릴리즈될 수 있다. 일반적으로 repository는 루트 디렉토리 1개의 module만 포함(`go.mod` 파일을 통해 module의 경로를 명시)한다.
-    - package의 경로와 실제 해당 경로에 위치한 go 소스코드에 명시한(`package` 키워드 문) package 이름이 다를 경우, package가 위치한 경로를 명시해 import하지만 실제 소스코드 내에서 사용할 때는 import 경로에 위치한 go 소스코드에 `package` 키워드 문에 명시된 이름을 통해 접근해야 한다. 이는 혼란을 야기할 수 있기 때문에 import 시 alias를 사용한다.
+    - package의 경로와 실제 해당 경로에 위치한 go 소스코드에 명시한(`package` 키워드 문) package 이름이 다를 경우, package가 위치한 경로를 명시해 import하지만 실제 소스코드 내에서 사용할 때는 import 경로에 위치한 go 소스코드 내 `package` 키워드 문에 명시된 이름을 통해 접근해야 한다. 이는 혼란을 야기할 수 있기 때문에 import 시 alias를 사용한다.
 - `import` 키워드를 여러 번 사용해 여러 package를 import할 수도 있지만 `import (...)`와 같이 사용하는 것을 권장한다.
 - package 내에서 대문자로 시작되는 이름을 갖는 경우 해당 package 밖에서도 참조가 가능하며 이를 exported name이라고 한다. 반대로 소문자로 시작되는 이름을 갖는 경우 package 내부에서만 참조가 가능하다. 예외적으로 내장 타입은 exported name이 아니여도 모든 패키지에서 접근이 가능하다.
 - 함수의 반환 값에 이름을 지정하는 경우 함수의 최상단에서 정의된 변수로 취급된다. 함수에서는 `return` 키워드만 사용해도 반환이된다. `return` 키워드를 생략하는 것은 불가능하다. 이를 naked return이라고 부르며 짧은 길이의 함수에서만 사용하는 것을 권장한다.
@@ -1005,7 +1005,7 @@
         	type L T   // illegal: T is a type parameter declared by the enclosing function
         }
         ```
-- type parameter(타입 파라미터)는 generic 함수, generic 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 이는 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다(interface{}와 비교했을 때, interface{}는 runtime시 사용에 따라 타입이 정해지기 때문에 위험하지만 generics의 경우 컴파일 시점에 결정되기 때문에 안전). 사용자는 generic 함수, generic 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
+- type parameter(타입 파라미터)는 generic 함수, generic 타입의 type parameter 목록을 나타낸다. type parameter는 type constraint(타입 제약)이 있으며 type parameter에 대한 일종의 메타 타입 역할을 수행한다. type parameter는 일반적으로 여러 타입의 집합을 나타내지만 컴파일 시점에는 단일 타입을 나타낸다(interface{}와 비교했을 때, interface{}는 runtime시 사용에 따라 타입이 정해지기 때문에 위험하지만 generics의 경우 컴파일 시점에 결정되기 때문에 안전). 사용자는 generic 함수, generic 타입 사용 시 type argument(타입 매개변수)를 명시해야 하지만, 컴파일러가 타입을 추측할 수 있는 경우 type argument를 생략할 수 있다.
     ``` go
     func PrintKeyValue[K ~string, V int](k K, v V) {
 	    fmt.Printf("key: %v, value: %v\n", k, v)
@@ -1054,7 +1054,7 @@
     - comparable은 general interface이기 때문에 type constraint로만 사용 가능하며 변수의 타입으로는 사용할 수 없다.
     - type argument T가 type constraint C를 충족한다는 의미는 T가 C의 type set에 포함된다는 것이다. 즉, T가 C를 구현하는 것을 말한다. 예외적으로 비교 가능한 type argument는 strictly comparable type constraint(comparable interface)을 충족한다. 이러한 예외 규칙으로 인해 비교 연산 수행 시 runtime panic이 발생할 수 있다.
         ``` go
-        type argument      type constraint                // constraint satisfaction
+        // type argument   type constraint                constraint satisfaction
 
         int                interface{ ~int }              // satisfied: int implements interface{ ~int }
         string             comparable                     // satisfied: string implements comparable (string is strictly comparable)
@@ -1066,6 +1066,7 @@
         interface{ m() }   interface{ comparable; m() }   // satisfied: interface{ m() } is comparable and implements the basic interface interface{ m() }
         ```
 - 비교 연산자 `==`, `!=`는 비교 가능한 타입에 사용할 수 있다.
+    - channel은 비교가 가능하다. 동일한 `make()` 내장 함수 호출을 통해 만들어진 경우, 두 값이 모두 nil인 경우에 동일하다.
     - type parameter가 아닌 interface 변수는 비교가 가능하다(type parameter는 strictly comparable인 경우에만 비교 가능). 두 interface가 동일하다는 의미는 두 interface 모두 `nil`이거나 dynamic 타입, 값이 동일한 경우다. dynamic 타입이 비교 가능하지 않을 경우 runtime panic이 발생할 수 있다.
     - slice, map, 함수 타입은 `nil` predeclared identifier와만 비교할 수 있다.
     - type parameter는 strictly comparable(비교가 가능한 타입이면서 interface 타입이 아니고 interface 타입으로 구성되지 않는 타입)한 경우에만 비교할 수 있다.
@@ -1083,8 +1084,7 @@
 - built-in 함수는 predeclared identifier다. 일반적인 함수와 동일하지만 몇 built-in 함수는 매개변수로 타입을 요구한다. 그리고 함수의 값으로 사용할 수 없다.
 - `import` 문을 사용해 다른 package의 exported 필드를 사용할 수 있다.
     ``` go
-    Import declaration          Local name of Sin
-
+    // Import declaration       Local name of Sin
     import   "lib/math"         math.Sin
     import m "lib/math"         m.Sin
     import . "lib/math"         Sin

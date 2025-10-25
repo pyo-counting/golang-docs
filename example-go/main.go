@@ -1,6 +1,8 @@
 package main
 
-func main() {
+import "fmt"
 
-	var c chan int = make(chan int, 1)
+func main() {
+	p := fmt.Println
+
 }
