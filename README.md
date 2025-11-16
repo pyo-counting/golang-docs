@@ -1,3 +1,6 @@
+### memo
+- logger multiplexer package를 구현할 필요가 있을까? 환경에 따른 level 설정은 필요할 것 같지만 logger에 대한 설정 변경이 필요한 상황이 있을까?
+
 ### about docs
 - go1.25.3 버전 기준으로 작성
 
@@ -1094,6 +1097,26 @@
         - package 이름과 경로가 일치하지 않으면 별칭이 필요하다.
         - 별칭 `.`은 해당 package의 exported 필드를 자신의 소스 파일 block에 선헌하기 때문에 수식어 없이 접근해야 한다.
         - 별칭 `_`을 사용해 package의 exported 필드를 사용하지 않지만 초기화 목적으로 사용할 수 있다.
+- package level의 변수는 init 함수를 통해 초기화할 수 있다.
+    ``` go
+    func init() { … }
+    ```
+    - package 초기화 특징은 다음과 같다.
+        - 단일 package, 단일 소스코드 파일 내에 여러 `init()` 함수를 정의할 수 있다.
+        - `init()` 함수는 일반적인 함수처럼 호출하거나 참조할 수 없다. 오로지 go runtime이 initialization 단계에서 자동으로 호출한다.
+        - 여러 package가 하나의 특정 package를 import 하더라도, 특정 package는 최초 단 한번만 초기화 된다.
+        - package import 구조 자체는 순환 초기화 의존성(Cyclic Initialization Dependencies)이 발생하지 않도록 보장한다.
+        - 하나의 goroutine을 통해 순차적으로 한 번에 한 package를 초기화한다.
+        - `int()` 함수는 다른 gorutine을 실행할 수 있으며, 다른 `int()` 함수와 동시에 실행될 수 있다. 다만, `int()` 함수 실행은 이전 `int()` 함수가 반환된 후 실행될 수 있다.
+        - 프로그램의 시작점인 main package가 가장 마지막에 초기화된다.
+    - go 프로그램의 모든 package는 다음 단계를 순서대로 초기화된다.
+        1. 전체 package 목록을 정렬: 프로그램에 사용되는 모든 package(main package 포함) 목록을 임포트 경로(import path)를 기준으로 정렬한다.
+        2. 단계별 초기화 대상 package 대상 선택: 아래 조건을 모두 만족하는 package 선택한다. 이 과정은 가장 최하위 의존성을 가진 package(다른 package를 import하지 않는 package)부터 시작하여, main package가 가장 마지막으로 초기화될 때까지 반복한다.
+            - 아직 초기화되지 않은 package
+            - 해당 pckage가 import하는 모든 package가 초기화가 완료된 상태
+        3. 선택된 package 레벨에서의 초가화 수행.
+            1. package 레벨 변수에 초기 값을 할당한다.
+            2. 모든 `init()` 함수를 호출한다. 호출 순서는 소스 파일 내 나타나는 순서대로다.
 
 ### [Developing modules](https://go.dev/doc/)
 - Organizing a Go module
