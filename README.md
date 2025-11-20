@@ -1,5 +1,6 @@
 ### memo
 - logger multiplexer package를 구현할 필요가 있을까? 환경에 따른 level 설정은 필요할 것 같지만 logger에 대한 설정 변경이 필요한 상황이 있을까?
+- standard library의 이름을 그대로 사용하면 충돌이 나기 때문에, 기능을 확장했다는 의미의 x(extended)를 접두사로 붙여 xerrors와 같이 새로운 이름을 만드는 것은 Go 커뮤니티에서 흔히 사용되는 관례 중 하나다.
 
 ### about docs
 - go1.25.3 버전 기준으로 작성
