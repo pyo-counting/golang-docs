@@ -60,7 +60,7 @@
 - method를 명시하지 않은 interface를 empty interface라고 한다. empty interface는 모든 value, 모든 type을 가질 수 있다. empty interface는 따로 `type` 키워드를 통해 선언할 필요가 없으며 변수 선언 시 `var i interface{}`와 같이 사용할 수 있다. empty interface는 알려지지 않은 타입의 값을 다룰 때 사용된다.
 - type assertion은 interface가 nil이 아니며 타입 T임을 확인하는 것을 말한다. `i.(T)` 표현식은 interface i가 T 타입임을 나타내며 i가 가리키는 T 타입의 변수를 반환한다. 만약 nil이나 T 타입이 아닐 경우 오류가 발생한다. `t, ok := i.(T)` 표현식은 두 번째 반환 값을 통해 타입 T가 맞는지에 따른 boolean 값을 반환한다.
 - type switch문은 switch의 테스트 표현식에 `i.(type)`을 사용해 interface 변수 i에 대한 내장 타입에 대한 case문을 작성할 수 있다.
-- 가장 흔한 interface는 fmt package에 있는 Stringer interface다. fmt package는 값을 출력하기 위해 Stringer interface의 String method를 호출한다.
+- 가장 흔한 interface는 fmt package에 있는 Stringer interface다. fmt package는 값을 출력하기 위해 error interface 구현 여부(Error() method 호출) -> fmt.Stringer interface 구현 여부(String() metrhod 호출) -> 기본 출력 순서대로 동작한다.
     ``` go
     type Stringer interface {
         String() string
