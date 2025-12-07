@@ -581,7 +581,7 @@
     - 컴퓨터 프로그램은 보통 여러 thread 가 동시에 실행된다. 이 thread들이 같은 변수나 데이터(공유 자원) 에 동시에 접근하면 문제가 생길 수 있다. 이런 현상을 race condition이라고 한다. 이러한 상황을 해결하기 위한 “한 번에 한 스레드만 접근하게 하자”는 동기화(synchronization) 개념이 나타났으며 이를 구현하는 방법이 atomic operation, mutex, semaphore다.
         - atomic operation: "쪼갤 수 없는 하나의 연산”. 즉, 어떤 연산이 실행될 때 중간에 다른 thread가 끼어들 수 없는 상태를 말한다. 주로 CPU 또는 메모리 level에서 보장 및 제공하는 기능이다.
         - mutex(mutual exclustion lock): “상호 배제”. 동시에 여러 thread가 하나의 자원에 접근하지 못하게 하는 잠금(lock) 장치다. 즉, “누가 쓰고 있을 때는 다른 사람은 들어오지 마라”라는 규칙을 만든다. 일반적으로 lock(), unlock() 함수를 통해 공유 자원에 대한 점유 작업을 수행한다.
-        - semaphore: mutex가 “한 명만 들어와라”라면 semaphore는 “최대 N명까지 들어와도 된다”를 뜻한다. counting semaphore는 counter를 통해 접근 가능한 thread를 관리한다. binary semaphore는 접근 가능한 thread가 1개일 경우를 뜻하며 사실 상 mutex와 동일하다.
+        - semaphore: mutex가 “한 명만 들어와라”라면 semaphore는 “최대 N명까지 들어와도 된다”를 뜻한다. counting semaphore는 counter를 통해 접근 가능한 thread를 관리한다. binary semaphore는 접근 가능한 thread가 1개일 경우를 뜻하며 mutex와 유사하다.
             |      개념    |               핵심 기능              |   동시에 허용되는 스레드 수  |         비유        |            사용 예시          |
             |:------------:|:------------------------------------:|:----------------------------:|:-------------------:|:-----------------------------:|
             |   Atomic     |   단일 변수 연산을 원자적으로 수행   |   1 (변수 단위)              |   스위치 켜기/끄기  |   카운터 증가, 플래그 변경    |
@@ -621,7 +621,7 @@
     - slices standard library는 slice 타입에 대한 여러 가지 함수를 제공한다. cmp standard library는 정렬과 관련된 타입과 함수를 제공한다. `cmp.Ordered` interface 타입은 <, <=, >=, > 연산자를 지원하는 타입에 대한 제한을 정의한다.
         - `func Sort[S ~[]E, E cmp.Ordered](x S)` 함수는 ordered type slice의 오름차순 정렬을 수행한다. 실수의 경우 NaN은 가장 앞에 위치하게 된다.
 - Sorting by Functions
-    - slices standard library의 `func SortFunc[S ~[]E, E any](x S, cmp func(a, b E) int)` 함수를 통해 사용자는 매개 변수로 cmp 함수를 사용해 정렬 방법을 직접 구현할 수 있다. 이 때 cmp 함수는 a가 b보다 작을 경우 음수, a와 비가 같은 경우 0, a가 b보다 클 경우 양수를 반환해야 한다는 조건을 갖는다. 관련해서 cmp standard library의 `func Compare[T Ordered](x, y T) int` 함수를 사용할 수 있다.
+    - slices standard library의 `func SortFunc[S ~[]E, E any](x S, cmp func(a, b E) int)` 함수를 통해 사용자는 매개 변수로 cmp 함수를 사용해 정렬 방법을 직접 구현할 수 있다. 이 때 cmp 함수는 a가 b보다 작을 경우 음수, a와 b가 같은 경우 0, a가 b보다 클 경우 양수를 반환해야 한다는 조건을 갖는다. 관련해서 cmp standard library의 `func Compare[T Ordered](x, y T) int` 함수를 사용할 수 있다.
         ``` go
         func main() {
             fruits := []string{"peach", "banana", "kiwi"}
